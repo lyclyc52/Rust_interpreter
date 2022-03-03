@@ -160,7 +160,6 @@ class ExpressionGenerator implements CalcVisitor<es.Expression> {
     }
   }
   visitAddition(ctx: AdditionContext): es.Expression {
-  
     return {
       type: 'BinaryExpression',
       operator: '+',
@@ -238,7 +237,6 @@ function convertSource(expression: ExpressionContext): es.Program {
 export function parse(source: string, context: Context) {
   let program: es.Program | undefined
 
-  
   if (context.variant === 'calc') {
     const inputStream = new ANTLRInputStream(source)
     const lexer = new CalcLexer(inputStream)
