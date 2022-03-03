@@ -46,8 +46,8 @@
     "jsdoc": "./scripts/jsdoc.sh",
     "autocomplete": "node ./scripts/updateAutocompleteDocs.js",
     "docs": "yarn jsdoc && yarn autocomplete",
-    "build": "yarn docs && yarn tsc",
-    "antlr4ts": "antlr4ts -visitor ./src/lang/Calc.g4"
+    "build": "yarn tsc",
+    "antlr4ts": "antlr4ts -visitor ./src/Rust1/RustParser.g4 ./src/Rust1/RustLexer.g4"
   },
   "repository": {
     "type": "git",
