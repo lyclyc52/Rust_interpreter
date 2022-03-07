@@ -5,9 +5,10 @@ fn f(x: i32,y: i32) -> bool {
 }
 
 
-fn a(a:i32)->i32
-{
-    {
-       3
+fn f(){
+    let x = 0;
+    for number in 1..5 {
+        x = x + 1;
     }
+    
 }

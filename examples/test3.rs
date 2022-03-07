@@ -19,7 +19,7 @@ if number < 5 {
 // while loop
 let mut number = 3;
 while number != 0 {
-    number -= 1;
+    number = number - 1;
 }
 
 
@@ -27,7 +27,7 @@ while number != 0 {
 // loop loop
 let mut counter = 0;
 let result = loop {
-    counter += 1;
+    counter == 1;
 
     if counter == 10 {
         break counter * 2;
