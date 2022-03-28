@@ -28,6 +28,7 @@ export function validateAndAnnotate(
   }
 
   // initialise scope of variables
+  
   ancestor(program as es.Node, {
     Program: processBlock,
     BlockStatement: processBlock,
@@ -62,7 +63,7 @@ export function validateAndAnnotate(
       VariableDeclaration(node: TypeAnnotatedNode<es.VariableDeclaration>, ancestors: es.Node[]) {
         const lastAncestor = ancestors[ancestors.length - 2]
         const name = getVariableDecarationName(node)
-        const accessedBeforeDeclaration = accessedBeforeDeclarationMap.get(lastAncestor)!.get(name)!
+        const accessedBeforeDeclaration = true? false:accessedBeforeDeclarationMap.get(lastAncestor)!.get(name)!
           .accessedBeforeDeclaration
         node.typability = accessedBeforeDeclaration ? 'Untypable' : 'NotYetTyped'
       },

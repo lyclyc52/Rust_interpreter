@@ -148,7 +148,7 @@ export function binaryOp(
   }
 }
 
-export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
+export function evaluateBinaryExpression(operator: any, left: any, right: any) {
   switch (operator) {
     case '+':
       return left + right
@@ -172,6 +172,8 @@ export function evaluateBinaryExpression(operator: BinaryOperator, left: any, ri
       return left > right
     case '>=':
       return left >= right
+    case '[]':
+    case '.':
     default:
       return undefined
   }

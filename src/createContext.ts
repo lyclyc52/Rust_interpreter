@@ -36,9 +36,17 @@ export const createEmptyContext = <T>(
     prelude: null,
     executionMethod: 'auto',
     variant,
-    typeEnvironment: createTypeEnvironment()
+    typeEnvironment: createTypeEnvironment(),
+    heap: [],
+    heap_size: 8,
+    free: 0,
+    node_type_number: 5,
+    object_type:{}
+
   }
 }
+
+
 
 export const ensureGlobalEnvironmentExist = (context: Context) => {
   if (!context.runtime) {

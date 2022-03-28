@@ -251,3 +251,46 @@ export class SetPropertyError extends RuntimeSourceError {
     return 'TODO'
   }
 }
+
+
+export class ConstWithoutInitialValue extends RuntimeSourceError {
+  public const_variable: string
+
+  constructor(node: es.Node, public variable_name: string) {
+    super(node)
+    this.const_variable = variable_name
+  }
+
+  public explain() {
+    return `Constant variable ${this.const_variable} need to be initialized.`
+  }
+
+  public elaborate() {
+
+    return `Assign a value to ${this.const_variable} when it is declared.`
+  }
+}
+
+export class InvalidOperator extends RuntimeSourceError {
+  public variable: string
+  public is_array: boolean
+  constructor(node: es.Node, public variable_name: string, is_array:boolean) {
+    super(node)
+    this.variable = variable_name
+  }
+
+  public explain() {
+    return `Invaild indexing operator for variable ${this.variable}.`
+  }
+
+  public elaborate() {
+    if(this.is_array){
+      return `"." operator might be used for Array object. `
+    }
+    else{
+      return `"[]" operator might be used for Tuple object. `
+    }
+    
+  }
+}
+
