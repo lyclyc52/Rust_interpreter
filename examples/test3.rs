@@ -1,9 +1,11 @@
 // if statement
-if number < 5 {
-    let x=4;
+let x;
+if 3 < 5 {
+   x=4;
 } else {
-    let x=3;
+   x=3;
 }
+x
 
 if number < 5 {
     let x=4;
@@ -26,14 +28,24 @@ while number != 0 {
 
 // loop loop
 let mut counter = 0;
-let result = loop {
+loop {
+    counter = counter + 1;
+
+    if counter == 10 {
+        break;
+    }
+}
+counter
+
+
+let mut counter = 0;
+loop {
     counter == 1;
 
     if counter == 10 {
         break counter * 2;
     }
 };
-
 
 // for loop
 let x = 0;

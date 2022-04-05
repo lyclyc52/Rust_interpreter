@@ -77,8 +77,8 @@ export const checkBinaryExpression = (
     case '<=':
     case '>':
     case '>=':
-    case '!==':
-    case '===':
+    case '!=':
+    case '==':
       if (isNumber(left)) {
         return isNumber(right) ? undefined : new TypeError(node, RHS, 'number', typeOf(right))
       } else if (isString(left)) {

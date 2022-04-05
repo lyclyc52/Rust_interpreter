@@ -252,7 +252,6 @@ export class SetPropertyError extends RuntimeSourceError {
   }
 }
 
-
 export class ConstWithoutInitialValue extends RuntimeSourceError {
   public const_variable: string
 
@@ -266,7 +265,6 @@ export class ConstWithoutInitialValue extends RuntimeSourceError {
   }
 
   public elaborate() {
-
     return `Assign a value to ${this.const_variable} when it is declared.`
   }
 }
@@ -274,7 +272,7 @@ export class ConstWithoutInitialValue extends RuntimeSourceError {
 export class InvalidOperator extends RuntimeSourceError {
   public variable: string
   public is_array: boolean
-  constructor(node: es.Node, public variable_name: string, is_array:boolean) {
+  constructor(node: es.Node, public variable_name: string, is_array: boolean) {
     super(node)
     this.variable = variable_name
   }
@@ -284,13 +282,41 @@ export class InvalidOperator extends RuntimeSourceError {
   }
 
   public elaborate() {
-    if(this.is_array){
+    if (this.is_array) {
       return `"." operator might be used for Array object. `
-    }
-    else{
+    } else {
       return `"[]" operator might be used for Tuple object. `
     }
-    
   }
 }
 
+
+export class MultipleMutReference extends RuntimeSourceError {
+  
+  constructor(public name: string, node: es.Node) {
+    super(node)
+  }
+
+  public explain() {
+    return `${this.name} already has a mut reference.`
+  }
+
+  public elaborate() {
+    return `One variable can only have one mutable reference.`
+  }
+}
+
+
+export class InvaildParameter extends RuntimeSourceError {
+  constructor(node: es.Node) {
+    super(node)
+  }
+
+  public explain() {
+    return `Function parameter(s) must have initial type.`
+  }
+
+  public elaborate() {
+    return `Need : operator to assign a type`
+  }
+}

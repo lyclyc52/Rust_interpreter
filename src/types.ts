@@ -95,7 +95,6 @@ export interface Context<T = any> {
     nodes: es.Node[]
   }
 
-
   moduleParams?: any
 
   numberOfOuterEnvironments: number
@@ -122,12 +121,13 @@ export interface Context<T = any> {
 
   typeEnvironment: TypeEnvironment
 
-  node_type_number:number
-  object_type:Frame
-  heap:any[]
-  heap_size:number
-  free:number
-
+  node_type_number: number
+  object_type: Frame
+  heap: any[]
+  heap_size: number
+  to_space: number
+  from_space:number
+  free: number
 }
 
 export interface BlockFrame {
@@ -299,15 +299,8 @@ export type TypeEnvironment = {
   declKindMap: Map<string, AllowedDeclarations>
 }[]
 
-
 export interface ObjectNode {
-  type: 'Object',
-  size: number,
+  type: 'Object'
+  size: number
   first_object_offset: number
-
 }
-
-
-
-
-
