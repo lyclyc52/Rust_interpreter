@@ -22,6 +22,7 @@ if number < 5 {
 let mut number = 3;
 while number != 0 {
     number = number - 1;
+    println!("{}",number)
 }
 
 
@@ -51,4 +52,5 @@ loop {
 let x = 0;
 for number in 1..5 {
     x = x + 1;
+    println!(\"number is {}\", x);
 }

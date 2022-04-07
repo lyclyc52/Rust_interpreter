@@ -1,6 +1,7 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
-import { isArray} from 'lodash'
+
+import { isArray } from 'lodash'
 // import { result } from 'lodash'
 // import { assign, values } from 'lodash'
 // import { freemem, type } from 'os'
@@ -14,7 +15,6 @@ import { primitive } from '../utils/astCreator'
 // import { evaluateBinaryExpression, evaluateUnaryExpression } from '../utils/operators'
 import * as rttc from '../utils/rttc'
 import Closure from './closure'
-
 
 // number type
 const NODETYPE_NUMBER = 0
@@ -32,15 +32,20 @@ const SIZE_STRING = 6
 const FIRST_STRING = 0
 const LAST_STRING = -1
 
-
 // reference type
 const NODETYPE_REFERENCE = 3
 const SIZE_REFERENCE = 6
 const FIRST_REFERENCE = 0
 const LAST_REFERENCE = -1
 
-let OBJECT_TYPES = {"()":4, "[]":5} as Frame
+// box type
+const NODETYPE_BOX = 4
+const SIZE_BOX = 6
+const FIRST_BOX = 0
+const LAST_BOX = 1
 
+const OBJECT_TYPES = { '()': 5, '[]': 6 } as Frame
+let NODE_TYPE_NUM = 7
 
 // object type constants(including array and tuple)
 
@@ -56,10 +61,7 @@ const last_offset = 4
 
 const value_offset = 5
 
-
 const object_value_offset = 5
-
-
 
 class BreakValue {
   constructor(public value: Value) {}
@@ -148,10 +150,19 @@ const handleRuntimeError = (context: Context, error: RuntimeSourceError): never 
 
 const DECLARED_BUT_NOT_YET_ASSIGNED = Symbol('Used to implement hoisting')
 
+function evaluateType(type:es.Pattern):any{
+  if(type.type === 'Identifier'){
+    return type.name
+  }
+  else if(type.type === 'MemberExpression'){
+    return [evaluateType(type.object as es.Pattern), evaluateType(type.property as es.Pattern)]
+  }
+}
+
 function declareIdentifier(context: Context, id: es.Pattern, variable_type: string, node: es.Node) {
   const environment = currentEnvironment(context)
   const name = ((id as es.AssignmentPattern).left as es.Identifier).name
-  const init_type = ((id as es.AssignmentPattern).right as es.Identifier).name
+  const init_type = evaluateType((id as es.AssignmentPattern).right as es.Pattern)
   if (environment.head.hasOwnProperty(name)) {
     const descriptors = Object.getOwnPropertyDescriptors(environment.head)
 
@@ -162,9 +173,9 @@ function declareIdentifier(context: Context, id: es.Pattern, variable_type: stri
   }
   environment.head[name] = {
     variable_type: variable_type,
-    init_type: init_type === "null"? "any":init_type,
+    init_type: init_type === 'null' ? 'any' : init_type,
     value: DECLARED_BUT_NOT_YET_ASSIGNED
-  } 
+  }
 
   return environment
 }
@@ -179,8 +190,8 @@ function declareVariables(context: Context, node: es.VariableDeclaration) {
 function declareFunctions(context: Context, node: es.FunctionDeclaration) {
   const environment = currentEnvironment(context)
   const name = (node.id as es.Identifier).name
-  const init_type = "fn"
-  
+  const init_type = 'fn'
+
   if (environment.head.hasOwnProperty(name)) {
     const descriptors = Object.getOwnPropertyDescriptors(environment.head)
     return handleRuntimeError(
@@ -188,37 +199,133 @@ function declareFunctions(context: Context, node: es.FunctionDeclaration) {
       new errors.VariableRedeclaration(node, name, descriptors[name].writable)
     )
   }
-  let closure = []
+  const closure = []
 
-  for(let i=0; i<node.params.length-1;i+=1)
-  {
-    if(node.params[i].type === "Identifier"){
-      return handleRuntimeError(
-        context,
-        new errors.InvaildParameter(node)
-      )
+  for (let i = 0; i < node.params.length - 1; i += 1) {
+    if (node.params[i].type === 'Identifier') {
+      return handleRuntimeError(context, new errors.InvaildParameter(node))
     }
     const param = node.params[i] as es.AssignmentPattern
-    const variable_type = ((param.left as es.ArrayPattern).elements[0] as es.Identifier).name
-    const param_name = ((param.left as es.ArrayPattern).elements[1]as es.Identifier).name
-    const init_type = (param.right as es.Identifier).name
     
-    closure.push( {
+    const variable_type = ((param.left as es.ArrayPattern).elements[0] as es.Identifier).name
+    const param_name = ((param.left as es.ArrayPattern).elements[1] as es.Identifier).name
+    const init_type = evaluateType(param.right as es.Pattern)
+    // if(param.right.type === 'Identifier'){
+    //   init_type = param.right.name
+    // } else {
+    //   const temp = param.right as es.MemberExpression
+    //   init_type = [(temp.object as es.Identifier).name, (temp.property as es.Identifier).name]
+      
+    // }
+
+    closure.push({
       param_name: param_name,
-      variable_type: variable_type === "mut"? "var":"let",
-      init_type: init_type === "null"? "any":init_type,
+      variable_type: variable_type === 'mut' ? 'var' : 'let',
+      init_type: init_type === 'null' ? 'any' : init_type,
       value: DECLARED_BUT_NOT_YET_ASSIGNED
     })
-  } 
+  }
+
+    
+    
+
+
+  
   environment.head[name] = {
-    variable_type: "const",
+    variable_type: 'const',
     init_type: init_type,
     env: closure,
     value: node.body
-  } 
+  }
 
   return environment
 }
+
+function declareClass(context: Context, node: es.ClassDeclaration) {
+  const environment = currentEnvironment(context)
+  const name = (node.id as es.Identifier).name
+
+  if (environment.head.hasOwnProperty(name)) {
+    const descriptors = Object.getOwnPropertyDescriptors(environment.head)
+    return handleRuntimeError(
+      context,
+      new errors.VariableRedeclaration(node, name, descriptors[name].writable)
+    )
+  }
+  
+  environment.head[name] = {
+    variable_type: 'const',
+    variable_name: name,
+    value: node.body
+  }
+
+  if((node.superClass as es.Identifier).name === "enum") {
+    environment.head[name].init_type = "enum"
+    environment.head[name].value = evaluateEnumItem(context, node.body)
+    
+    for(const i in environment.head[name].value){
+
+      OBJECT_TYPES[name+'::'+i] = NODE_TYPE_NUM
+      NODE_TYPE_NUM += 1
+      for(const j of environment.head[name].value[i]){
+        if(j === name){
+          handleRuntimeError(context, new errors.RecursiveDefiniton(name, node))
+        }
+      }
+    }
+  } else if((node.superClass as es.Identifier).name === "struct") {
+    environment.head[name].init_type = "struct"
+    const struct_value = evaluateStructItem(context, node.body)
+    environment.head[name].value = struct_value.names
+    environment.head[name].value_type = struct_value.types
+
+    OBJECT_TYPES[name] = NODE_TYPE_NUM
+    NODE_TYPE_NUM += 1
+
+    for(const i of struct_value.types){
+      if(i === name){
+        handleRuntimeError(context, new errors.RecursiveDefiniton(name, node))
+      }
+    }
+
+  }
+
+  
+  return undefined
+
+}
+
+function evaluateEnumItem(context: Context, node: es.ClassBody) { 
+  let enum_items = {}
+  const items = (node.body[0].key as es.ArrayExpression).elements 
+  for(const item of items){
+    
+    const name =((item as es.ClassExpression).id as es.Identifier).name
+    
+    enum_items[name] = []
+    let value = (item as es.ClassExpression).body.body[0].key
+    if(value.type === "MemberExpression"){
+      value = value as es.MemberExpression
+      for(const type of (value.object as es.ArrayExpression).elements){
+        enum_items[name].push(evaluateType(type as es.Pattern))
+      } 
+    }
+  }
+  return enum_items
+}
+
+function evaluateStructItem(context: Context, node: es.ClassBody) {
+  const items = (node.body[0].key as es.ArrayExpression).elements
+  const names = []
+  const types = []
+  for(const i of items){
+    const pairs = (i as es.ArrayExpression).elements
+    names.push((pairs[0] as es.Identifier).name)
+    types.push(evaluateType(pairs[1] as es.Pattern))
+  }
+  return {names: names, types:types}
+}
+
 
 function declareFunctionsAndVariables(context: Context, node: es.BlockStatement) {
   for (const statement of node.body) {
@@ -228,6 +335,9 @@ function declareFunctionsAndVariables(context: Context, node: es.BlockStatement)
         break
       case 'FunctionDeclaration':
         declareFunctions(context, statement)
+        break
+      case 'ClassDeclaration':
+        declareClass(context, statement)
         break
     }
   }
@@ -246,7 +356,26 @@ function* leave(context: Context) {
 const currentEnvironment = (context: Context) => context.runtime.environments[0]
 const replaceEnvironment = (context: Context, environment: Environment) =>
   (context.runtime.environments[0] = environment)
-const popEnvironment = (context: Context) => context.runtime.environments.shift()
+function popEnvironment(context: Context){
+  const env = currentEnvironment(context)
+  context.runtime.environments.shift()
+  const out_env = currentEnvironment(context)
+  for(const i in env.head){
+    if(env.head[i].value_type === '&' || env.head[i].value_type === '&mut'){
+      
+      const variable_name = (env.head[i].value as es.Identifier).name
+      if(env.head[variable_name] !== undefined){
+        continue
+      } else{
+        updateVariableReferenceByName(variable_name,i, out_env,context)
+      }
+      
+    }
+  }
+  
+}
+
+
 const pushEnvironment = (context: Context, environment: Environment) =>
   context.runtime.environments.unshift(environment)
 
@@ -274,27 +403,79 @@ const checkNumberOfArguments = (
   return undefined
 }
 
-function* setVariableReferenceByName(node: es.Identifier, environment: Environment, context: Context): any {
+function getStructPropertyIndex(type:any, property:string){
+  let index = undefined
+  for(let i = 0; i<type.value.length; i+=1){
+    if(type.value[i] === property){
+      index = i
+      break
+    }
+  }
+  return index
+}
+
+function updateVariableReferenceByName(
+  variable_name: string,
+  ref_name: string,
+  environment: Environment,
+  context: Context,
+): any {
+  if (environment === null || environment === undefined) {
+    return
+  } if (environment.head[variable_name] !== undefined) {
+      for(let i = environment.head[variable_name].reference_names.length-1;
+          i>=0; i-=1 ){
+            if(environment.head[variable_name].reference_names[i] === ref_name){
+              environment.head[variable_name].reference_names.splice(i, 1)
+              break
+            }
+      }
+      if(environment.head[variable_name].reference_names.length === 0){
+        environment.head[variable_name].has_reference = 'null'
+      }
+
+  } else {
+    return updateVariableReferenceByName(variable_name,ref_name, environment.tail as Environment, context)
+  }
+}
+
+
+function* setVariableReferenceByName(
+  node: es.Identifier,
+  ref_name: string,
+  environment: Environment,
+  context: Context,
+  ref_type: string
+): any {
   const name = node.name
+  
   if (environment === null || environment === undefined) {
     handleRuntimeError(context, new errors.UndefinedVariable(name, node))
   } else {
     if (environment.head[name] !== undefined) {
-      if(environment.head[name].has_mutable_reference)
-      {
+      if(environment.head[name].value === undefined){
+        handleRuntimeError(context, new errors.ReferUninit(name, node))
+      } else if (environment.head[name].has_reference === "&mut" && ref_type=== "&mut") {
         handleRuntimeError(context, new errors.MultipleMutReference(name, node))
-      }
-      else
-      {
-        environment.head[name].has_mutable_reference = true
-      }
+      } else if ((environment.head[name].has_reference === "&" && ref_type=== "&mut") ||
+                  environment.head[name].has_reference === "&mut" && ref_type=== "&"){
+        handleRuntimeError(context, new errors.DifferentTypeReference(name, node))
+      } else {
+        environment.head[name].has_reference = ref_type
+        // list all reference variables of the object
+        if(environment.head[name].reference_names === undefined){
+          environment.head[name].reference_names = []
+          environment.head[name].reference_names.push(ref_name)
+        } else{
+          environment.head[name].reference_names.push(ref_name)
+        }
 
+      }
     } else {
-      return yield* getVariableByName(node, environment.tail as Environment, context)
+      return yield* setVariableReferenceByName(node,ref_name, environment.tail as Environment, context, ref_type)
     }
   }
 }
-
 
 function* getVariableByName(node: es.Identifier, environment: Environment, context: Context): any {
   const name = node.name
@@ -310,25 +491,28 @@ function* getVariableByName(node: es.Identifier, environment: Environment, conte
   }
 }
 
-
 function* getValueByName(node: es.Identifier, environment: Environment, context: Context) {
   const variable = yield* getVariableByName(node, environment, context)
+  
   if (variable.value === DECLARED_BUT_NOT_YET_ASSIGNED) {
     handleRuntimeError(context, new errors.UnassignedVariable(node.name, node))
   } else {
-    if (variable.value_type === undefined){
+    if (variable.value_type === undefined) {
       return variable.value
+    } else {
+      return { value: variable.value, type: variable.value_type }
     }
-    else {
-      return {vale: variable.value, type:variable.value_type}
-    }
-    
   }
 }
 
 function* read_heap_value(start: number, context: Context, index: any): any {
   if (index === null) {
-    return context.heap[start + value_offset]
+    if(context.heap[start] <= 4){
+      return context.heap[start + value_offset]
+    } else {
+      return {type: context.heap[start], value:start}
+    }
+
   } else {
     const object_p = context.heap[start + object_value_offset + index]
     return yield* read_heap_value(object_p, context, null)
@@ -338,9 +522,12 @@ function* read_heap_value(start: number, context: Context, index: any): any {
 function* getValueByIndex(node: es.Identifier, index: any, context: Context, is_array: boolean) {
   const environment = currentEnvironment(context)
   const variable = yield* getVariableByName(node, environment, context)
-  if (variable.value_type === "Box") {
+  if (variable.value_type === 'Box') {
     const starting = variable.value
-    if ((is_array && context.heap[starting] !== context.object_type["[]"]) || (!is_array && context.heap[starting] === context.object_type["[]"])) {
+    if (
+      (is_array && context.heap[starting] !== context.object_type['[]']) ||
+      (!is_array && context.heap[starting] === context.object_type['[]'])
+    ) {
       return handleRuntimeError(context, new errors.InvalidOperator(node, node.name, is_array))
     }
     return read_heap_value(starting, context, index)
@@ -348,8 +535,7 @@ function* getValueByIndex(node: es.Identifier, index: any, context: Context, is_
   if ((is_array && variable.value_type != '[]') || (!is_array && variable.value_type === '[]')) {
     return handleRuntimeError(context, new errors.InvalidOperator(node, node.name, is_array))
   } else {
-      return variable.value[index]
-    
+    return variable.value[index]
   }
 }
 
@@ -359,19 +545,36 @@ function* assignValueByName(
   environment: Environment | null,
   context: Context
 ): any {
+  
   let name, property
   if (node.type === 'MemberExpression') {
-    name = (node.object as es.Identifier).name
-    property = yield* evaluate(node.property, context)
+    if(node.property.type === 'Identifier' && node.property.name === '*'){
+      
+      const value = yield* evaluate(node.object, context)
+
+      if(value.type === 'Box'){
+        return
+      } else{
+        name = (value.value as es.Identifier).name
+        
+      }
+    } else{
+      name = (node.object as es.Identifier).name
+      property = yield* evaluate(node.property, context)
+    }
+
   } else {
     name = (node as es.Identifier).name
   }
-
   if (environment === null || environment === undefined) {
     handleRuntimeError(context, new errors.UndefinedVariable(name, node))
   } else {
+    
     if (environment.head[name] !== undefined) {
-      if (node.type === 'MemberExpression') {
+      if(environment.head[name].variable_type === 'const'){
+        handleRuntimeError(context, new errors.ConstAssignment(node,name))
+      }
+      if (node.type === 'MemberExpression' && (node.property as es.Identifier).name !== '*') {
         environment.head[name].value[property] = value
       } else {
         environment.head[name].value = value
@@ -382,31 +585,25 @@ function* assignValueByName(
   }
 }
 
-function pushToHeap(value: any, context:Context) {
-  if(isArray(value.value)) {
-    pushArrayToHeap(value.value,value.type,context)
-  }
-  else{
-    if(value.type !== undefined)
-    {
+function pushToHeap(value: any, context: Context) {
+  if (isArray(value.value)) {
+    pushArrayToHeap(value.value, value.type, context)
+  } else {
       pushItemToHeap(value, context)
-    }
-
   }
 }
 
 function pushItemToHeap(value: any, context: Context) {
+
   if (typeof value === 'number') {
     context.heap[context.free + node_type_offset] = NODETYPE_NUMBER
     context.heap[context.free + node_size_offset] = SIZE_NUMBER
     context.heap[context.free + garbage_pointer_offset] = context.free
     context.heap[context.free + first_offset] = FIRST_NUMBER
-    context.heap[context.free + last_offset] = (LAST_NUMBER)
+    context.heap[context.free + last_offset] = LAST_NUMBER
     context.heap[context.free + value_offset] = value
     context.free += SIZE_NUMBER
   } else if (typeof value === 'boolean') {
-    
-
     context.heap[context.free + node_type_offset] = NODETYPE_BOOLEAN
     context.heap[context.free + node_size_offset] = SIZE_BOOLEAN
     context.heap[context.free + garbage_pointer_offset] = context.free
@@ -415,7 +612,6 @@ function pushItemToHeap(value: any, context: Context) {
     context.heap[context.free + value_offset] = value
     context.free += SIZE_BOOLEAN
   } else if (typeof value === 'string') {
-
     context.heap[context.free + node_type_offset] = NODETYPE_STRING
     context.heap[context.free + node_size_offset] = SIZE_STRING
     context.heap[context.free + garbage_pointer_offset] = context.free
@@ -423,9 +619,7 @@ function pushItemToHeap(value: any, context: Context) {
     context.heap[context.free + last_offset] = LAST_STRING
     context.heap[context.free + value_offset] = value
     context.free += SIZE_STRING
-  } 
-  else if(value.type === "&")
-  {
+  } else if (value.type === '&') {
     context.heap[context.free + node_type_offset] = NODETYPE_REFERENCE
     context.heap[context.free + node_size_offset] = SIZE_REFERENCE
     context.heap[context.free + garbage_pointer_offset] = context.free
@@ -433,31 +627,42 @@ function pushItemToHeap(value: any, context: Context) {
     context.heap[context.free + last_offset] = LAST_REFERENCE
     context.heap[context.free + value_offset] = value.value
     context.free += SIZE_REFERENCE
-  }
-  else{
-
+  } else if (value.type === 'Box') {
+    context.heap[context.free + node_type_offset] = NODETYPE_BOX
+    context.heap[context.free + node_size_offset] = SIZE_BOX
+    context.heap[context.free + garbage_pointer_offset] = context.free
+    context.heap[context.free + first_offset] = FIRST_BOX
+    context.heap[context.free + last_offset] = LAST_BOX
+    context.heap[context.free + value_offset] = value.value
+  }else {
   }
 }
 
 function pushArrayToHeap(value: any[], type: string, context: Context) {
   const starting = context.free
-  context.heap[starting + node_type_offset] = (context.object_type[type])
-  context.heap[starting + node_size_offset] = (value.length + 5)
+  let type_value
+  if(isArray(type)){
+    if(type[0] === 'Box'){
+      type_value = 'Box'
+    } else{
+      type_value = type[0] + '::'+type[1][0]
+    }
+  } else {
+    type_value = type
+  }
+  context.heap[starting + node_type_offset] = context.object_type[type_value]
+  context.heap[starting + node_size_offset] = value.length + 5
   context.heap[starting + garbage_pointer_offset] = starting
   context.heap[starting + first_offset] = FIRST_OBJECT
   context.heap[starting + last_offset] = FIRST_OBJECT + value.length
-
 
   context.free = context.free + value.length + 5
 
   for (let i = 0; i < value.length; i = i + 1) {
     context.heap[starting + 5 + i] = context.free
-    pushItemToHeap(value[i], context)
+    pushToHeap(value[i], context)
   }
 }
-
-
-
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
@@ -515,7 +720,7 @@ function* evaluateBinaryExpression(
 }
 function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
   declareFunctionsAndVariables(context, node)
-  
+
   let result
 
   for (let i = 0; i < node.body.length; i += 1) {
@@ -527,7 +732,6 @@ function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
       result instanceof BreakValue ||
       result instanceof ContinueValue
     ) {
-      
       break
     }
   }
@@ -537,40 +741,119 @@ function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
 
 function* evaluateMemberExpression(context: Context, node: es.MemberExpression) {
   // If we check it in the typechecker, we will not need to check the type here
+
   if (node.object.type === 'ArrayExpression') {
     const type_name = (node.property as es.Identifier).name
-    const result = { value: yield* evaluate(node.object, context), type: type_name }
-    
-    return result
-  } 
-  else if((node.property as es.Identifier).name === "&"){
-    
-    const env = currentEnvironment(context)    
-    getVariableByName(node.object as es.Identifier, env, context)
-    return { value: node.object, type: "&" }
-    
-  }
-  else if((node.property as es.Identifier).name === "&mut") {
-    const env = currentEnvironment(context)
-    setVariableReferenceByName(node.object as es.Identifier, env, context)
-    return { value: node.object, type: "&mut" }
-  }
-  else if((node.property as es.Identifier).name === "*") {
-    
+    if(type_name === '::'){
+      return yield* getEnumValue(context, currentEnvironment(context) ,node)
+    } else{
+      const result = { value: yield* evaluate(node.object, context), type: type_name }
+      return result
+    }
+
+  } else if ((node.property as es.Identifier).name === '&') { // for mut reference
+    return { value: node.object, type: '&' }
+  } else if ((node.property as es.Identifier).name === '&mut') { // for mut reference
+    return { value: node.object, type: '&mut' }
+  } else if ((node.property as es.Identifier).name === '*') {// for dereference
     const env = currentEnvironment(context)
     const variable = yield* getVariableByName(node.object as es.Identifier, env, context)
-    if (variable.value.type === "Identifier"){
+    
+    if (variable.value.type === 'Identifier') {
       return yield* evaluate(variable.value, context)
-    }
-    else {
+    } else {
       return yield* read_heap_value(variable.value, context, null)
     }
-      
-  }
-  else {
-    const property = yield* evaluate(node.property, context)
-    const is_array = node.optional
-    return yield* getValueByIndex(node.object as es.Identifier, property, context, is_array)
+  } else {
+
+    // array type and tuple type
+    if(node.property.type === 'Literal') {
+      const property = yield* evaluate(node.property, context)
+      const is_array = node.optional
+      if(node.object.type === 'Identifier'){
+        return yield* getValueByIndex(node.object, property, context, is_array)
+      } else {
+        
+        const value = yield* evaluate(node.object, context)
+        if(value.type === undefined || typeof value.type !== 'number'){
+          return value[property]
+        } else {
+          if(value.type === 5 || value.type === 6) {  // for array and tuple type
+            return yield* read_heap_value(value.value, context, property)
+          } 
+          
+        }
+        
+      }
+    } else { // struct type
+      const environment = currentEnvironment(context)
+      const property = (node.property as es.Identifier).name
+
+      // variable can be directly accessed
+      if(node.object.type === 'Identifier'){
+        const variable = yield* getVariableByName(node.object as es.Identifier, environment, context)
+        const type = yield* getVariableByName({type: 'Identifier', name: variable.value_type}, environment, context)
+        
+        const index =  getStructPropertyIndex(type, property)
+
+        if(index === undefined){
+          return handleRuntimeError(context, new errors.InvaildProperty(node, type.variable_name, property))
+        } else {
+          return variable.value[index]
+        }
+
+      } else { // variable cannot be directly accessed
+        const variable = yield* evaluate(node.object, context)
+
+        if(variable.type === undefined || typeof variable.type !== 'number'){
+          const type = yield* getVariableByName({type: 'Identifier', name: variable.value_type}, environment, context)
+          const index =  getStructPropertyIndex(type, property)
+        
+          if(index === undefined){
+            return handleRuntimeError(context, new errors.InvaildProperty(node, type.variable_name, property))
+          } else {
+            return variable.value[index]
+          }
+
+        } else {
+          // get the type of the node
+          let type_name 
+          for(const i in OBJECT_TYPES){
+            if(OBJECT_TYPES[i] === variable.type){
+              type_name = i
+              break
+            }
+          }
+
+          // find the index and get the value from the heap
+          if(type_name === undefined){
+            return
+          } else{
+            const type = yield* getValueByName({type:'Identifier', name: type_name},
+                        currentEnvironment(context),
+                        context)
+  
+            const index =  getStructPropertyIndex(type, property)
+
+
+            if(index === undefined){
+              return handleRuntimeError(context, new errors.InvaildProperty(node, type.variable_name, property))
+            } else {
+              return yield* read_heap_value(variable.value, context, index)
+            }
+          
+        }
+
+
+        
+
+
+
+
+        }
+      }
+
+    }
   }
 }
 
@@ -579,24 +862,27 @@ function* evaluateVariableDeclaration(context: Context, node: es.VariableDeclara
   for (const declaration of node.declarations) {
     const name = ((declaration.id as es.AssignmentPattern).left as es.Identifier).name
     if (declaration.init !== null && declaration.init !== undefined) {
-      // console.log(environment.head[name].value)
       const result = yield* evaluate(declaration.init as es.Expression, context)
-      if (result.type === undefined){
-        environment.head[name].value = result
+      
+      if(result.type === "&" || result.type === "&mut") {
+        yield* setVariableReferenceByName(result.value, name, environment, context, result.type)
       }
-      else{      
+
+      if (result.type === undefined) {
+        environment.head[name].value = result
+      } else {
         environment.head[name].value_type = result.type
         environment.head[name].value = result.value
       }
+
       // if (declaration.init.type === 'MemberExpression') {
-        
+
       //   if(declaration.init.object.type === "ArrayExpression")
       //   {
       //     const result = yield* evaluate(declaration.init as es.MemberExpression, context)
       //     environment.head[name].value_type = result.type
       //     environment.head[name].value = context.free
-          
-          
+
       //   }
       //   else
       //   {
@@ -605,7 +891,7 @@ function* evaluateVariableDeclaration(context: Context, node: es.VariableDeclara
       //     environment.head[name].value = result.value
       //   }
 
-      // } 
+      // }
       // else {
       //   environment.head[name].value = yield* evaluate(declaration.init as es.Expression, context)
       // }
@@ -625,7 +911,7 @@ function* evaluateAssignmentExpression(context: Context, node: es.AssignmentExpr
   const environment = currentEnvironment(context)
 
   let value = yield* evaluate(node.right, context)
-  if(value instanceof ReturnValue){
+  if (value instanceof ReturnValue) {
     value = value.value
   }
   return yield* assignValueByName(node.left, value, environment, context)
@@ -652,128 +938,187 @@ function* evaluateAssignmentExpression(context: Context, node: es.AssignmentExpr
   // }
 }
 
-function* evaluateCallExpression(context:Context, node:es.CallExpression){
-  const environment = currentEnvironment(context)
-  const func  = yield* getVariableByName(node.callee as es.Identifier, environment,context)
-  if(func.is_builtin)
-  {
-    const result = yield* builtin_evaluators[func.name](node,context)
-    return result
+function* getEnumValue(context: Context, environment: Environment, node: es.MemberExpression) {
+  const temp = (node.object as es.ArrayExpression).elements
     
-  }
-  else
-  {
-    const func_body = {type:"BlockStatement", body: func.value} as es.BlockStatement
-    let closure:Frame = {}
-    for(let i = 0; i<node.arguments.length; i+=1){
-      const param = func.env[i]
-      closure[param.param_name] = param
-      closure[param.param_name].value = yield* evaluate(node.arguments[i], context)
-    }
-    const func_env = {
-      name:'function_environment',
-      tail: currentEnvironment(context),
-      head:closure
-    }
+  const root = temp[0] as es.Identifier
+  const leaf = (temp[1] as es.Identifier).name
+  const value = yield* getVariableByName(root, environment, context)
+  const return_value = { value: value[leaf], type: [root.name,[leaf]]}
   
-    pushEnvironment(context, func_env)
-    let result = yield* evaluateBlockSatement(context, func_body)
-    popEnvironment(context)
-    if(result instanceof ReturnValue){
-      result = result.value
+  if(return_value === undefined){
+    return handleRuntimeError(context, new errors.InvaildEnumValue(root.name, leaf,node))
+  } else{
+    return return_value
+  }
+}
+
+function* getCallee(context: Context, environment: Environment, node: es.Expression){
+  if(node.type === 'Identifier'){
+    return yield* getVariableByName(node, environment, context)
+  } else if(node.type === 'MemberExpression'){
+    return yield* getEnumValue(context, environment,node)
+  } else {
+    return
+  }
+}
+
+function* evaluateCallExpression(context: Context, node: es.CallExpression) {
+  const environment = currentEnvironment(context)
+  const func = yield* getCallee(context, environment, node.callee as es.Expression)
+  if(node.callee.type === 'MemberExpression' && 
+     node.callee.property.type === 'Identifier' &&
+     node.callee.property.name === '::'){
+      const value = []
+      for (let i = 0; i < node.arguments.length; i += 1) {
+        value.push(yield* evaluate(node.arguments[i], context))
+      }
+      return { value: value, type: func.type }
+  } else {
+    if (func.is_builtin) {
+      const result = yield* builtin_evaluators[func.name](node, context)
+      return result
+    } else {
+      if(func.init_type === 'struct'){
+        const items = {}
+        for(const i of node.arguments){
+          const temp = i as es.AssignmentExpression
+          const name = (temp.left as es.Identifier).name
+          const value = yield* evaluate(temp.right, context)
+          items[name] = value
+        }
+
+        const return_value = []
+        for(const i of func.value){
+          return_value.push(items[i])
+        }
+
+        return { value: return_value, type: func.variable_name }
+      } else {
+        const func_body = { type: 'BlockStatement', body: func.value } as es.BlockStatement
+        const closure: Frame = {}
+        for (let i = 0; i < node.arguments.length; i += 1) {
+          const param = func.env[i]
+          closure[param.param_name] = param
+          closure[param.param_name].value = yield* evaluate(node.arguments[i], context)
+        }
+        const func_env = {
+          name: 'function_environment',
+          tail: currentEnvironment(context),
+          head: closure
+        }
+    
+        pushEnvironment(context, func_env)
+        let result = yield* evaluateBlockSatement(context, func_body)
+        const env = currentEnvironment(context)
+        popEnvironment(context)
+        
+        if (result instanceof ReturnValue) {
+          result = result.value
+        }
+    
+        if(result.type === '&' || result.type === '&mut'){
+          if(env.head[(result.value as es.Identifier).name] !== undefined){
+            handleRuntimeError(context, new errors.ReturnLocalReference((node.callee as es.Identifier).name, node))
+          }
+        }
+        return result
+      }
     }
-    return result
   }
 
-} 
+}
 
-function* evaluateWhileStatement(context:Context, node:es.WhileStatement){
+function* evaluateWhileStatement(context: Context, node: es.WhileStatement) {
   let condition = yield* evaluate(node.test, context)
   let result
-  while(condition){
-    
+  
+  while (condition) {
     result = yield* evaluate(node.body, context)
     condition = yield* evaluate(node.test, context)
+    if(result instanceof ReturnValue ){
+      return result
+    }
+    else if(result instanceof BreakValue){
+      return undefined
+    }
   }
 
   return result
 }
 
-function* evaluateBreakStatement(context:Context, node:es.BreakStatement) {
-  return node.label === null? new BreakValue(undefined) :
-        new BreakValue(yield* evaluate(node.label as es.Expression, context))
+function* evaluateBreakStatement(context: Context, node: es.BreakStatement) {
+  return node.label === null
+    ? new BreakValue(undefined)
+    : new BreakValue(yield* evaluate(node.label as es.Expression, context))
 }
 
-function* evaluateRangeExpression(context:Context, node:es.BinaryExpression) {
-  let iter = yield* evaluate(node.left,context)
+function* evaluateRangeExpression(context: Context, node: es.BinaryExpression) {
+  let iter = yield* evaluate(node.left, context)
   const end = yield* evaluate(node.right, context)
   const result = []
-  for(iter; iter<end; iter += 1){
+  for (iter; iter < end; iter += 1) {
     result.push(iter)
   }
   return result
 }
 
-function* evaluateForInStatement(context:Context, node:es.ForInStatement) {
+function* evaluateForInStatement(context: Context, node: es.ForInStatement) {
   let range
-  if(node.right.type === "BinaryExpression"){
+  if (node.right.type === 'BinaryExpression') {
     range = yield* evaluateRangeExpression(context, node.right)
-  }
-  else{
+  } else {
     range = yield* evaluate(node.right, context)
   }
 
   const iter_name = (node.left as es.ArrayPattern).elements[1] as es.Identifier
   const iter_type = (node.left as es.ArrayPattern).elements[0] as es.Identifier
-  
-  let for_env = {
-    name:'for_loop_environment',
+
+  const for_env = {
+    name: 'for_loop_environment',
     tail: currentEnvironment(context),
-    head:{}
+    head: {}
   }
-  for_env.head[iter_name.name]= { param_name: iter_name.name,
-    variable_type: iter_type.name === "mut"? "var":"let",
-    init_type: "any",
-    value: DECLARED_BUT_NOT_YET_ASSIGNED}
-  
-  
+  for_env.head[iter_name.name] = {
+    param_name: iter_name.name,
+    variable_type: iter_type.name === 'mut' ? 'var' : 'let',
+    init_type: 'any',
+    value: DECLARED_BUT_NOT_YET_ASSIGNED
+  }
+
   let result
 
   pushEnvironment(context, for_env)
-  
 
-  for(const iter of range){
-    assignValueByName(iter_name, iter,
-                      currentEnvironment(context), context)
+  for (const iter of range) {
+    assignValueByName(iter_name, iter, currentEnvironment(context), context)
 
     result = yield* evaluate(node.body, context)
-    if(result instanceof ReturnValue){
-         break
-    }
-    else if(result instanceof BreakValue){
+    if (result instanceof ReturnValue) {
+      break
+    } else if (result instanceof BreakValue) {
       result = undefined
       break
-    }
-    else if(result instanceof ContinueValue){
+    } else if (result instanceof ContinueValue) {
       continue
     }
   }
   popEnvironment(context)
   return result
-} 
-
-function* evaluateIfStatement(context:Context, node:es.IfStatement | es.ConditionalExpression) {
-    const condition = yield* evaluate(node.test, context)
-
-    if(condition){
-      return yield* evaluate(node.consequent as es.Statement, context)
-    }
-    else{
-
-      return yield* evaluate(node.alternate as es.Statement, context)
-    }
 }
 
+function* evaluateIfStatement(context: Context, node: es.IfStatement | es.ConditionalExpression) {
+  const condition = yield* evaluate(node.test, context)
+
+  if (condition) {
+    return yield* evaluate(node.consequent as es.Statement, context)
+  } else if(node.alternate === null){
+    return 
+  }
+  else{
+    return yield* evaluate(node.alternate as es.Statement, context)
+  }
+}
 
 /**
  * WARNING: Do not use object literal shorthands, e.g.
@@ -793,195 +1138,294 @@ export const builtin_evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const starting = context.free
     const value = yield* evaluate(node.arguments[0] as es.Expression, context)
     pushToHeap(value,context)
-
     return {value:starting, type:"Box"}
+  },
+
+  "println!":function*(node: es.CallExpression, context: Context) {
+    let length = node.arguments.length
+    if(length === 0){
+      // If there is nothing inside, print a newline 
+      console.log("")
+      return
+    }
+
+    const first = node.arguments[0]
+    const first_value = yield* evaluate(first, context)
+    if(first.type !== "Literal" || typeof first_value !== "string"){
+      handleRuntimeError(
+        context,
+        new errors.InvaildprintlnArgumnet(node)
+      )
+    }
+    
+    let replace_num = 0
+    let p = 0
+    while( p < first_value.length-1){
+      if(first_value.slice(p,p+2) === "{}"){
+        replace_num += 1
+        p+=2
+      }
+      else{
+        p+=1
+      }
+    }
+
+    if(length - 1 !== replace_num){
+      handleRuntimeError(
+        context,
+        new errors.NotMatchprintln(node, replace_num, length - 1)
+      )
+    }
+
+    let count = 0
+    let replace_count = 1
+    let value 
+    let output = ""
+    while( count < first_value.length-1){
+      if(first_value.slice(count,count+2) === "{}"){
+        value = yield* evaluate(node.arguments[replace_count], context)
+        if(typeof value !== "number" && 
+           typeof value !== "string" &&
+           typeof value !== "boolean"){
+            handleRuntimeError(
+              context,
+              new errors.NotPrintable(node, value)
+            )
+        }
+        output = output +value
+        count += 2 
+        replace_count += 1
+      } else{
+        output = output +first_value.slice(count, count + 1)
+        count += 1 
+      }
+    }
+    
+    // for(let i =0; i<length;i+=1){
+    //   const arg = node.arguments[i]
+    //   let value
+    //   if(arg.type === "Identifier"){
+    //     if(arg.name === "{}"){
+          
+          
+    //       replace_count += 1
+    //     }
+    //     else{
+    //       value = yield* evaluate(arg, context)
+    //     }
+    //   }
+    //   else{
+    //     value = yield* evaluate(arg, context)
+    //   }
+    //   output = output + value
+    // }
+
+    // Output in the terminal
+    console.log(output)
+    return 
   },
 }
 
 export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
-    /** Simple Values */
-    Literal: function*(node: es.Literal, context: Context) {
-        return node.value
-    },
+  /** Simple Values */
+  Literal: function* (node: es.Literal, context: Context) {
 
-    TemplateLiteral: function*(node: es.TemplateLiteral) {
-        // Expressions like `${1}` are not allowed, so no processing needed
-        return node.quasis[0].value.cooked
-    },
-
-    ThisExpression: function*(node: es.ThisExpression, context: Context) {
-        return context.runtime.environments[0].thisContext
-    },
-
-    ArrayExpression: function*(node: es.ArrayExpression, context: Context) {
-        const array_value = []
-        for(const element of node.elements){
-          array_value.push(yield* evaluate(element, context))
-        }
-        return array_value
-    },
-
-    DebuggerStatement: function*(node: es.DebuggerStatement, context: Context) {
-        yield
-    },
-
-    FunctionExpression: function*(node: es.FunctionExpression, context: Context) {
-        throw new Error("Function expressions not supported in x-slang");
-    },
-
-    ArrowFunctionExpression: function*(node: es.ArrowFunctionExpression, context: Context) {
-        throw new Error("Arrow functions expressions not supported in x-slang");
-    },
-
-    Identifier: function*(node: es.Identifier, context: Context) {
-        return yield* evaluateIdentifier(context, node)
-    },
-
-    CallExpression: function*(node: es.CallExpression, context: Context) {
-        return yield* evaluateCallExpression(context, node)
-    },
-
-    NewExpression: function*(node: es.NewExpression, context: Context) {
-        const callee = yield* evaluate(node.callee, context)
-        const args = []
-        for (const arg of node.arguments) {
-            args.push(yield* evaluate(arg, context))
-        }
-        const obj: Value = {}
-        if (callee instanceof Closure) {
-            obj.__proto__ = callee.fun.prototype
-            callee.fun.apply(obj, args)
-        } else {
-            obj.__proto__ = callee.prototype
-            callee.apply(obj, args)
-        }
-        return obj
-    },
-
-    UnaryExpression: function*(node: es.UnaryExpression, context: Context) {
-        const value = yield* actualValue(node.argument, context)
-
-        const error = rttc.checkUnaryExpression(node, node.operator, value)
-        if (error) {
-            return handleRuntimeError(context, error)
-        }
-        return yield* evaluateUnaryExpression(node.operator, value)
-    },
-
-    BinaryExpression: function*(node: es.BinaryExpression, context: Context) {
-        const left = yield* actualValue(node.left, context)
-        const right = yield* actualValue(node.right, context)
-        const error = rttc.checkBinaryExpression(node, node.operator, left, right)
-        if (error) {
-            return handleRuntimeError(context, error)
-        }
-        return yield* evaluateBinaryExpression(context, left, right, node)
-    },
-
-    ConditionalExpression: function*(node: es.ConditionalExpression, context: Context) {
-        throw new Error("Conditional expressions not supported in x-slang");
-    },
-
-    LogicalExpression: function*(node: es.LogicalExpression, context: Context) {
-        throw new Error("Logical expressions not supported in x-slang");
-    },
-
-    VariableDeclaration: function*(node: es.VariableDeclaration, context: Context) {
-      yield* evaluateVariableDeclaration(context, node)
-      return undefined
-      
-    },
-
-    ContinueStatement: function*(node: es.ContinueStatement, context: Context) {
-        throw new Error("Continue statements not supported in x-slang");
-    },
-
-    BreakStatement: function*(node: es.BreakStatement, context: Context) {
-      return yield* evaluateBreakStatement(context, node)
-    },
-
-    ForStatement: function*(node: es.ForStatement, context: Context) {
-        // Create a new block scope for the loop variables
-        throw new Error("For statements not supported in x-slang");
-    },
-    ForInStatement: function*(node: es.ForInStatement, context: Context) {
-      // Create a new block scope for the loop variables
-      return yield* evaluateForInStatement(context, node)  
-    },
-    MemberExpression: function*(node: es.MemberExpression, context: Context) {
-        return yield* evaluateMemberExpression(context, node)
-    },
-
-    AssignmentExpression: function*(node: es.AssignmentExpression, context: Context) {
-        return yield* evaluateAssignmentExpression(context, node)
-    },
-
-    FunctionDeclaration: function*(node: es.FunctionDeclaration, context: Context) {
-        return undefined
-    },
-
-    IfStatement: function*(node: es.IfStatement | es.ConditionalExpression, context: Context) {
-        yield* evaluateIfStatement(context, node)
-
-        return 
-    },
-
-    ExpressionStatement: function*(node: es.ExpressionStatement, context: Context) {
-        return yield* evaluate(node.expression, context)
-    },
-
-    ReturnStatement: function*(node: es.ReturnStatement, context: Context) {
-        return  new ReturnValue(yield* evaluate(node.argument as es.Expression, context))
-    },
-
-
-
-    WhileStatement: function*(node: es.WhileStatement, context: Context) {
-        return yield* evaluateWhileStatement(context, node as es.WhileStatement)
-    },
-
-    ObjectExpression: function*(node: es.ObjectExpression, context: Context) {
-        throw new Error("Object expressions not supported in x-slang");
-    },
-
-    BlockStatement: function*(node: es.BlockStatement, context: Context) {
-        const environment = createBlockEnvironment(context, 'block')
-        pushEnvironment(context,environment)
-        const result =  yield* evaluateBlockSatement(context, node)
-        popEnvironment(context)
-        return result
-    },
-
-    ImportDeclaration: function*(node: es.ImportDeclaration, context: Context) {
-        throw new Error("Import declarations not supported in x-slang");
-    },
-
-    Program: function*(node: es.BlockStatement, context: Context) {
-        context.numberOfOuterEnvironments += 1
-        context.object_type = OBJECT_TYPES
-
-        const environment = createBlockEnvironment(context, 'programEnvironment')
-        addBuiltinFunctions(environment)
-
-
-        pushEnvironment(context, environment)
-        const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context);
-        return result;
+    var n = Number(node.raw);
+    if (!isNaN(n))
+    {
+      return node.value;
     }
+    else {
+      if(node.raw === 'true'){
+        return true
+      }
+      else if(node.raw === 'false'){
+        return false
+      }
+      else{
+        return (node.raw as string).slice(1, -1)
+      }
+
+    }
+    
+  },
+
+  TemplateLiteral: function* (node: es.TemplateLiteral) {
+    // Expressions like `${1}` are not allowed, so no processing needed
+    return node.quasis[0].value.cooked
+  },
+
+  ThisExpression: function* (node: es.ThisExpression, context: Context) {
+    return context.runtime.environments[0].thisContext
+  },
+
+  ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
+    const array_value = []
+    for (const element of node.elements) {
+      array_value.push(yield* evaluate(element, context))
+    }
+    return array_value
+  },
+
+  DebuggerStatement: function* (node: es.DebuggerStatement, context: Context) {
+    yield
+  },
+
+  FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
+    throw new Error('Function expressions not supported in x-slang')
+  },
+
+  ArrowFunctionExpression: function* (node: es.ArrowFunctionExpression, context: Context) {
+    throw new Error('Arrow functions expressions not supported in x-slang')
+  },
+
+  Identifier: function* (node: es.Identifier, context: Context) {
+    return yield* evaluateIdentifier(context, node)
+  },
+
+  CallExpression: function* (node: es.CallExpression, context: Context) {
+    return yield* evaluateCallExpression(context, node)
+  },
+
+  NewExpression: function* (node: es.NewExpression, context: Context) {
+    const callee = yield* evaluate(node.callee, context)
+    const args = []
+    for (const arg of node.arguments) {
+      args.push(yield* evaluate(arg, context))
+    }
+    const obj: Value = {}
+    if (callee instanceof Closure) {
+      obj.__proto__ = callee.fun.prototype
+      callee.fun.apply(obj, args)
+    } else {
+      obj.__proto__ = callee.prototype
+      callee.apply(obj, args)
+    }
+    return obj
+  },
+
+  UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
+    const value = yield* actualValue(node.argument, context)
+
+    const error = rttc.checkUnaryExpression(node, node.operator, value)
+    if (error) {
+      return handleRuntimeError(context, error)
+    }
+    return yield* evaluateUnaryExpression(node.operator, value)
+  },
+
+  BinaryExpression: function* (node: es.BinaryExpression, context: Context) {
+    const left = yield* actualValue(node.left, context)
+    const right = yield* actualValue(node.right, context)
+    const error = rttc.checkBinaryExpression(node, node.operator, left, right)
+    if (error) {
+      return handleRuntimeError(context, error)
+    }
+    return yield* evaluateBinaryExpression(context, left, right, node)
+  },
+
+  ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
+    throw new Error('Conditional expressions not supported in x-slang')
+  },
+
+  LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
+    throw new Error('Logical expressions not supported in x-slang')
+  },
+
+  VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
+    yield* evaluateVariableDeclaration(context, node)
+    return undefined
+  },
+
+  ContinueStatement: function* (node: es.ContinueStatement, context: Context) {
+    throw new Error('Continue statements not supported in x-slang')
+  },
+
+  BreakStatement: function* (node: es.BreakStatement, context: Context) {
+    return yield* evaluateBreakStatement(context, node)
+  },
+
+  ForStatement: function* (node: es.ForStatement, context: Context) {
+    // Create a new block scope for the loop variables
+    throw new Error('For statements not supported in x-slang')
+  },
+  ForInStatement: function* (node: es.ForInStatement, context: Context) {
+    // Create a new block scope for the loop variables
+    return yield* evaluateForInStatement(context, node)
+  },
+  MemberExpression: function* (node: es.MemberExpression, context: Context) {
+    return yield* evaluateMemberExpression(context, node)
+  },
+
+  AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
+    return yield* evaluateAssignmentExpression(context, node)
+  },
+
+  FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
+    return undefined
+  },
+
+  IfStatement: function* (node: es.IfStatement | es.ConditionalExpression, context: Context) {
+    yield* evaluateIfStatement(context, node)
+
+    return
+  },
+
+  ExpressionStatement: function* (node: es.ExpressionStatement, context: Context) {
+    return yield* evaluate(node.expression, context)
+  },
+
+  ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
+    return new ReturnValue(yield* evaluate(node.argument as es.Expression, context))
+  },
+
+  WhileStatement: function* (node: es.WhileStatement, context: Context) {
+    return yield* evaluateWhileStatement(context, node as es.WhileStatement)
+  },
+
+  ObjectExpression: function* (node: es.ObjectExpression, context: Context) {
+    throw new Error('Object expressions not supported in x-slang')
+  },
+
+  BlockStatement: function* (node: es.BlockStatement, context: Context) {
+    const environment = createBlockEnvironment(context, 'block')
+
+    pushEnvironment(context, environment)
+    const result = yield* evaluateBlockSatement(context, node)
+    popEnvironment(context)
+    return result
+  },
+
+  ClassDeclaration: function* (node: es.ClassDeclaration, context: Context) {
+
+  },
+
+  ImportDeclaration: function* (node: es.ImportDeclaration, context: Context) {
+    throw new Error('Import declarations not supported in x-slang')
+  },
+
+  Program: function* (node: es.BlockStatement, context: Context) {
+    context.numberOfOuterEnvironments += 1
+    context.object_type = OBJECT_TYPES
+
+    const environment = createBlockEnvironment(context, 'programEnvironment')
+    addBuiltinFunctions(environment)
+
+    pushEnvironment(context, environment)
+    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
+    return result
+  }
 }
-const builtin_function_name = [
-  "Box::new",
-  "println!"
-]
+const builtin_function_name = ['Box::new', 'println!']
+//@ts-ignore
+const reserved = ["i32","let","fn","mut"]
 function addBuiltinFunctions(environment: Environment) {
-  
-   for(const name of builtin_function_name){
-     environment.head[name] = {is_builtin: true, name: name}
-   }
+  for (const name of builtin_function_name) {
+    environment.head[name] = { is_builtin: true, name: name }
+  }
 
-   return environment
+  return environment
 }
-
 
 // tslint:enable:object-literal-shorthand
 export function* evaluate(node: es.Node, context: Context) {

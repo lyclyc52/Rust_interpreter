@@ -28,7 +28,7 @@ import { RustParser } from '../Rust/RustParser'
 // import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 
 // import { AttributedExpressionContext } from "../Rust/RustParser";
-// import { LiteralExpressionContext } from "../Rust/RustParser";
+import { LiteralExpressionContext } from "../Rust/RustParser";
 import { PathExpression_Context } from '../Rust/RustParser'
 // import { MethodCallExpressionContext } from "../Rust/RustParser";
 // import { FieldExpressionContext } from "../Rust/RustParser";
@@ -38,7 +38,7 @@ import { CallExpressionContext } from '../Rust/RustParser'
 import { IndexExpressionContext } from '../Rust/RustParser'
 // import { ErrorPropagationExpressionContext } from "../Rust/RustParser";
 import { BorrowExpressionContext } from '../Rust/RustParser'
-import { DereferenceExpressionContext } from "../Rust/RustParser";
+import { DereferenceExpressionContext } from '../Rust/RustParser'
 // import { NegationExpressionContext } from "../Rust/RustParser";
 // import { TypeCastExpressionContext } from "../Rust/RustParser";
 import { ArithmeticOrLogicalExpressionContext } from '../Rust/RustParser'
@@ -47,8 +47,8 @@ import { ComparisonExpressionContext } from '../Rust/RustParser'
 import { RangeExpressionContext } from '../Rust/RustParser'
 import { AssignmentExpressionContext } from '../Rust/RustParser'
 // import { CompoundAssignmentExpressionContext } from "../Rust/RustParser";
-import { ContinueExpressionContext } from "../Rust/RustParser";
-import { BreakExpressionContext } from "../Rust/RustParser";
+import { ContinueExpressionContext } from '../Rust/RustParser'
+import { BreakExpressionContext } from '../Rust/RustParser'
 // import { ReturnExpressionContext } from "../Rust/RustParser";
 import { GroupedExpressionContext } from '../Rust/RustParser'
 import { ArrayExpressionContext } from '../Rust/RustParser'
@@ -60,10 +60,10 @@ import { ExpressionWithBlock_Context } from '../Rust/RustParser'
 // import { MacroInvocationAsExpressionContext } from "../Rust/RustParser";
 // import { CrateContext } from "../Rust/RustParser";
 // import { MacroInvocationContext } from "../Rust/RustParser";
-// import { DelimTokenTreeContext } from "../Rust/RustParser";
-// import { TokenTreeContext } from "../Rust/RustParser";
-// import { TokenTreeTokenContext } from "../Rust/RustParser";
-// import { MacroInvocationSemiContext } from "../Rust/RustParser";
+import { DelimTokenTreeContext } from "../Rust/RustParser";
+import { TokenTreeContext } from "../Rust/RustParser";
+import { TokenTreeTokenContext } from "../Rust/RustParser";
+import { MacroInvocationSemiContext } from "../Rust/RustParser";
 // import { MacroRulesDefinitionContext } from "../Rust/RustParser";
 // import { MacroRulesDefContext } from "../Rust/RustParser";
 // import { MacroRulesContext } from "../Rust/RustParser";
@@ -75,9 +75,9 @@ import { ExpressionWithBlock_Context } from '../Rust/RustParser'
 // import { MacroRepSepContext } from "../Rust/RustParser";
 // import { MacroRepOpContext } from "../Rust/RustParser";
 // import { MacroTranscriberContext } from "../Rust/RustParser";
-// import { ItemContext } from "../Rust/RustParser";
-// import { VisItemContext } from "../Rust/RustParser";
-// import { MacroItemContext } from "../Rust/RustParser";
+import { ItemContext } from "../Rust/RustParser";
+import { VisItemContext } from "../Rust/RustParser";
+import { MacroItemContext } from "../Rust/RustParser";
 // import { ModuleContext } from "../Rust/RustParser";
 // import { ExternCrateContext } from "../Rust/RustParser";
 // import { CrateRefContext } from "../Rust/RustParser";
@@ -98,14 +98,14 @@ import { FunctionReturnTypeContext } from '../Rust/RustParser'
 // import { Struct_Context } from "../Rust/RustParser";
 import { StructStructContext } from '../Rust/RustParser'
 // import { TupleStructContext } from "../Rust/RustParser";
-// import { StructFieldsContext } from "../Rust/RustParser";
-// import { StructFieldContext } from "../Rust/RustParser";
-// import { TupleFieldsContext } from "../Rust/RustParser";
-// import { TupleFieldContext } from "../Rust/RustParser";
+import { StructFieldsContext } from "../Rust/RustParser";
+import { StructFieldContext } from "../Rust/RustParser";
+import { TupleFieldsContext } from "../Rust/RustParser";
+import { TupleFieldContext } from "../Rust/RustParser";
 import { EnumerationContext } from '../Rust/RustParser'
 import { EnumItemsContext } from '../Rust/RustParser'
 import { EnumItemContext } from '../Rust/RustParser'
-// import { EnumItemTupleContext } from "../Rust/RustParser";
+import { EnumItemTupleContext } from "../Rust/RustParser";
 // import { EnumItemStructContext } from "../Rust/RustParser";
 // import { EnumItemDiscriminantContext } from "../Rust/RustParser";
 // import { Union_Context } from "../Rust/RustParser";
@@ -148,10 +148,10 @@ import { BlockExpressionContext } from '../Rust/RustParser'
 import { ArrayElementsContext } from '../Rust/RustParser'
 import { TupleElementsContext } from '../Rust/RustParser'
 import { TupleIndexContext } from '../Rust/RustParser'
-// import { StructExpressionContext } from "../Rust/RustParser";
-// import { StructExprStructContext } from "../Rust/RustParser";
-// import { StructExprFieldsContext } from "../Rust/RustParser";
-// import { StructExprFieldContext } from "../Rust/RustParser";
+import { StructExpressionContext } from "../Rust/RustParser";
+import { StructExprStructContext } from "../Rust/RustParser";
+import { StructExprFieldsContext } from "../Rust/RustParser";
+import { StructExprFieldContext } from "../Rust/RustParser";
 // import { StructBaseContext } from "../Rust/RustParser";
 // import { StructExprTupleContext } from "../Rust/RustParser";
 // import { StructExprUnitContext } from "../Rust/RustParser";
@@ -166,7 +166,7 @@ import { CallParamsContext } from '../Rust/RustParser'
 // import { ClosureParametersContext } from "../Rust/RustParser";
 // import { ClosureParamContext } from "../Rust/RustParser";
 import { LoopExpressionContext } from '../Rust/RustParser'
-import { InfiniteLoopExpressionContext } from "../Rust/RustParser";
+import { InfiniteLoopExpressionContext } from '../Rust/RustParser'
 import { PredicateLoopExpressionContext } from '../Rust/RustParser'
 // import { PredicatePatternLoopExpressionContext } from "../Rust/RustParser";
 import { IteratorLoopExpressionContext } from '../Rust/RustParser'
@@ -228,12 +228,12 @@ import { TraitObjectTypeOneBoundContext } from '../Rust/RustParser'
 import { TraitBoundContext } from '../Rust/RustParser'
 // import { LifetimeBoundsContext } from "../Rust/RustParser";
 // import { LifetimeContext } from "../Rust/RustParser";
-// import { SimplePathContext } from "../Rust/RustParser";
+import { SimplePathContext } from "../Rust/RustParser";
 // import { SimplePathSegmentContext } from "../Rust/RustParser";
 import { PathInExpressionContext } from '../Rust/RustParser'
 import { PathExprSegmentContext } from '../Rust/RustParser'
 import { PathIdentSegmentContext } from '../Rust/RustParser'
-// import { GenericArgsContext } from "../Rust/RustParser";
+import { GenericArgsContext } from "../Rust/RustParser";
 // import { GenericArgContext } from "../Rust/RustParser";
 // import { GenericArgsConstContext } from "../Rust/RustParser";
 // import { GenericArgsLifetimesContext } from "../Rust/RustParser";
@@ -250,9 +250,9 @@ import { TypePathSegmentContext } from '../Rust/RustParser'
 // import { VisibilityContext } from "../Rust/RustParser";
 import { IdentifierContext } from '../Rust/RustParser'
 // import { KeywordContext } from "../Rust/RustParser";
-// import { MacroIdentifierLikeTokenContext } from "../Rust/RustParser";
-// import { MacroLiteralTokenContext } from "../Rust/RustParser";
-// import { MacroPunctuationTokenContext } from "../Rust/RustParser";
+import { MacroIdentifierLikeTokenContext } from "../Rust/RustParser";
+import { MacroLiteralTokenContext } from "../Rust/RustParser";
+import { MacroPunctuationTokenContext } from "../Rust/RustParser";
 // import { ShlContext } from "../Rust/RustParser";
 // import { ShrContext } from "../Rust/RustParser";
 
@@ -263,6 +263,8 @@ import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
+
+
 
 // @ts-ignore
 const BinaryOperator = [
@@ -475,14 +477,25 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
   }
 
   visitType_(ctx: Type_Context): es.Pattern {
+    
     return this.visit(ctx.getChild(0))
   }
 
   visitTypeNoBounds(ctx: TypeNoBoundsContext): es.Pattern {
+    
     return this.visit(ctx.getChild(0))
   }
 
+
+
   visitTraitBound(ctx: TraitBoundContext): es.Pattern {
+    
+    return this.visit(ctx.getChild(0))
+  }
+
+
+
+  visitSimplePath(ctx: SimplePathContext) : es.Pattern {
     return this.visit(ctx.getChild(0))
   }
 
@@ -491,6 +504,7 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
   }
 
   visitTypePath(ctx: TypePathContext): es.Pattern {
+    
     return this.visit(ctx.getChild(0))
   }
 
@@ -498,15 +512,45 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
     return this.visit(ctx.getChild(0))
   }
 
+  visitGenericArgs(ctx: GenericArgsContext): es.Pattern {
+    return this.visit(ctx.getChild(1))
+  }
   visitTypePathSegment(ctx: TypePathSegmentContext): es.Pattern {
-    return this.visit(ctx.getChild(0))
+    
+    if(ctx.childCount === 1){
+      return this.visit(ctx.getChild(0))
+    }
+    else{
+      return {
+        type: 'MemberExpression',
+        object:this.visit(ctx.getChild(0)) as es.Identifier|es.MemberExpression,
+        property: this.visit(ctx.getChild(1)) as es.Identifier|es.MemberExpression,
+        optional:false,
+        computed:false
+      }
+    }
   }
 
   visitReferenceType(ctx: ReferenceTypeContext): es.Pattern {
-    return {
-      type: 'ArrayPattern',
-      elements: [this.visit(ctx.getChild(0)), this.visit(ctx.getChild(2))]
+
+    if(ctx.childCount === 3){
+      return {
+        type: 'MemberExpression',
+        object:{type: 'Identifier', name:'&mut'}, 
+        property: this.visit(ctx.getChild(1)) as es.Identifier,
+        optional:false,
+        computed:false
+      }
+    } else {
+      return {
+        type: 'MemberExpression',
+        object:{type: 'Identifier', name:'&'}, 
+        property: this.visit(ctx.getChild(1)) as es.Identifier,
+        optional:false,
+        computed:false
+      }
     }
+
   }
 
   visitTupleType(ctx: TupleTypeContext): es.Pattern {
@@ -539,7 +583,7 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
     return {
       type: 'AssignmentPattern',
       left: this.visit(ctx.getChild(0)),
-      right: this.visit(ctx.getChild(2)) as es.Identifier
+      right: this.visit(ctx.getChild(2)) as es.Identifier | es.MemberExpression
     }
   }
 
@@ -587,7 +631,7 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
     }
   }
   visitTerminal(node: TerminalNode): es.Pattern {
-    return node.accept(this)
+    return {type:"Identifier",name:node.text}
   }
 
   visitErrorNode(node: ErrorNode): es.Pattern {
@@ -624,22 +668,13 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
     }
   }
 
-  visitEnumItems(ctx: EnumItemsContext): es.Expression {
-    const value_enum: es.Expression[] = []
-    for (let i = 0; i < ctx.childCount; i += 2) {
-      value_enum.push(this.visit(ctx.getChild(i)) as es.Expression)
-    }
+  visitLiteralExpression(ctx: LiteralExpressionContext): es.Expression {
     return {
-      type: 'MemberExpression',
-      object: { type: 'ArrayExpression', elements: value_enum },
-      property: { type: 'Identifier', name: 'enum' },
-      computed: false,
-      optional: false
+      type: 'Literal',
+      value: parseInt(ctx.text),
+      raw: ctx.text,
+      loc: contextToLocation(ctx)
     }
-  }
-
-  visitEnumItem(ctx: EnumItemContext): es.Expression {
-    return this.visit(ctx.getChild(0)) as es.Expression
   }
 
   visitArithmeticOrLogicalExpression(ctx: ArithmeticOrLogicalExpressionContext): es.Expression {
@@ -778,6 +813,7 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   }
 
   visitPathExpression(ctx: PathExpressionContext): es.Expression {
+    
     return this.visit(ctx.getChild(0)) as es.Expression
   }
 
@@ -787,9 +823,28 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
    */
 
   visitPathInExpression(ctx: PathInExpressionContext): es.Expression {
-    return {
-      type: 'Identifier',
-      name: ctx.text
+    
+    if(ctx.childCount === 1){
+      return this.visit(ctx.getChild(0)) as es.Expression
+    } else {
+      if(ctx.text === 'Box::new'){
+        return {
+          type: 'Identifier',
+          name: ctx.text
+        }
+      } else {
+        const elements = []
+        elements.push(this.visit(ctx.getChild(0)) as es.Expression)
+        elements.push(this.visit(ctx.getChild(2)) as es.Expression)
+        
+        return {
+          type: 'MemberExpression',
+          object: {type:"ArrayExpression", elements:elements},
+          property: { type: 'Identifier', name: '::' },
+          computed: false,
+          optional: false
+        }
+      }
     }
   }
   visitPathExprSegment(ctx: PathExprSegmentContext): es.Expression {
@@ -808,6 +863,43 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
       property: this.visit(ctx.getChild(2)) as es.Expression,
       computed: false,
       optional: true
+    }
+  }
+
+  visitStructExpression(ctx: StructExpressionContext): es.Expression {
+    return this.visit(ctx.getChild(0)) as es.Expression
+  }
+
+  visitStructExprStruct(ctx: StructExprStructContext): es.Expression {
+    const struct_body = this.visit(ctx.getChild(2)) as es.ArrayExpression
+    return {
+      type: 'CallExpression',
+      callee: this.visit(ctx.getChild(0)) as es.Expression,
+      arguments: struct_body.elements,
+      optional: false
+    }
+  }
+
+  visitStructExprFields(ctx: StructExprFieldsContext): es.Expression {
+    const items: es.Expression[] = []
+    
+    for(let i = 0; i < ctx.childCount; i += 2){
+      items.push(this.visit(ctx.getChild(i)) as es.Expression)
+    }
+
+    return {
+      type: "ArrayExpression",
+      elements: items
+    }
+  }
+
+  visitStructExprField(ctx: StructExprFieldContext): es.Expression {
+    
+    return {
+      type: 'AssignmentExpression',
+      operator: '=',
+      left: this.pattern_generator.visit(ctx.getChild(0)),
+      right: this.visit(ctx.getChild(2)) as es.Expression
     }
   }
 
@@ -862,14 +954,17 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   }
 
   visitCallExpression(ctx: CallExpressionContext): es.Expression {
+
     let params: es.Expression[] = []
     if (ctx.getChild(ctx.childCount - 2).text !== '(') {
       const temp = this.visit(ctx.getChild(ctx.childCount - 2)) as es.ArrayExpression
       params = temp.elements as es.Expression[]
     }
+    
+    const callee_name = this.visit(ctx.getChild(0)) 
     return {
       type: 'CallExpression',
-      callee: this.visit(ctx.getChild(0)) as es.Expression,
+      callee: callee_name as es.Expression,
       arguments: params,
       optional: false
     }
@@ -898,25 +993,27 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   }
 
   visitStructStruct(ctx: StructStructContext): es.Statement {
-    const body_node = ctx.getChild(2)
-    const struct_variables: es.VariableDeclarator[] = []
-    for (let i = 0; i < body_node.childCount; i += 2) {
-      const variable = {
-        type: 'VariableDeclarator',
-        id: {
-          type: 'AssignmentPattern',
-          left: this.pattern_generator.visit(ctx.getChild(0)),
-          right: this.pattern_generator.visit(ctx.getChild(2))
-        } as es.AssignmentPattern,
-        init: null
-      } as es.VariableDeclarator
-      struct_variables.push(variable)
-    }
-    const struct_body = {
-      type: 'VariableDeclaration',
-      declarations: struct_variables,
-      kind: 'const'
-    }
+    const struct_body = this.visit(ctx.getChild(3))
+    
+    // const struct_variables: es.VariableDeclarator[] = []
+    // for (let i = 0; i < body_node.childCount; i += 2) {
+    //   const variable = {
+    //     type: 'VariableDeclarator',
+    //     id: {
+    //       type: 'AssignmentPattern',
+    //       left: this.pattern_generator.visit(ctx.getChild(0)),
+    //       right: this.pattern_generator.visit(ctx.getChild(2))
+    //     } as es.AssignmentPattern,
+    //     init: null
+    //   } as es.VariableDeclarator
+    //   struct_variables.push(variable)
+    // }
+    
+    // const struct_body = {
+    //   type: 'VariableDeclaration',
+    //   declarations: struct_variables,
+    //   kind: 'const'
+    // }
     return {
       type: 'ClassDeclaration',
       id: this.pattern_generator.visit(ctx.getChild(1)) as es.Identifier,
@@ -926,18 +1023,34 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
         body: [
           {
             type: 'MethodDefinition',
-            key: {} as es.Expression,
-            value: {
-              params: [],
-              type: 'FunctionExpression',
-              body: { type: 'BlockStatement', body: [struct_body as es.Statement] }
-            },
+            key: struct_body as es.Expression,
+            value: {} as es.FunctionExpression,
             kind: 'set',
             computed: false,
             static: false
           }
         ]
       }
+    }
+  }
+
+  visitStructFields(ctx: StructFieldsContext): es.Expression {
+    const items: es.Expression[] = []
+    for(let i=0; i<ctx.childCount; i+=2){
+      items.push(this.visit(ctx.getChild(i)) as es.Expression)
+    }
+    return {
+      type:"ArrayExpression",
+      elements: items 
+    }
+  }
+
+  visitStructField(ctx: StructFieldContext): es.Expression {
+    
+    return {
+      type:"ArrayExpression",
+      elements: [this.visit(ctx.getChild(0)) as es.Expression,
+                 this.visit(ctx.getChild(2)) as es.Expression] 
     }
   }
 
@@ -978,18 +1091,218 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
     }
   }
 
-  visitEnumeration(ctx: EnumerationContext): es.Statement {
-    return {
-      type: 'VariableDeclaration',
-      declarations: [
-        {
-          type: 'VariableDeclarator',
-          id: this.pattern_generator.visit(ctx.getChild(1)),
-          init: this.visit(ctx.getChild(3)) as es.Expression
-        }
-      ],
-      kind: 'const'
+  visitItem(ctx: ItemContext): es.Statement | es.Expression{
+    return this.visit(ctx.getChild(0))
+  }
+
+  
+  visitMacroItem(ctx: MacroItemContext): es.Statement | es.Expression{
+    
+    return this.visit(ctx.getChild(0))
+  }
+
+  
+  visitMacroInvocationSemi(ctx: MacroInvocationSemiContext): es.Expression{
+    const args:es.Expression[] = []    
+    for(let i = 3;i<ctx.childCount-2;i+=1){
+      
+      let item = this.visit(ctx.getChild(i)) as es.Expression
+      if (item.type === "ArrayExpression"){
+          for(let j = 0; j < item.elements.length;){
+            let i = item.elements[j]
+            if(i.type === "MemberExpression" && i.optional)
+            {
+                let last = args.pop() as es.Expression
+                i.object = last
+            } else if(i.type === "Identifier" && i.name === "."){
+              let last = args.pop()
+              j += 1
+              i = item.elements[j] as es.MemberExpression
+              i.object = last as es.Expression
+            }
+            args.push(i as es.Expression)
+            j += 1
+          }
+      } else{
+        args.push(item)
+      }
     }
+
+    return {
+      type: "CallExpression",
+      optional: false,
+      callee: {type:"Identifier", name:"println!"},
+      arguments: args
+    }
+  }
+
+  visitTokenTree(ctx: TokenTreeContext):  es.Expression{
+    const tokens:es.Expression[] = []
+    
+    for(let i = 0;i<ctx.childCount;){
+      const item = this.visit(ctx.getChild(i)) as es.Expression
+      if(item.type === "Identifier" && item.name === ","){
+        
+      } else if(item.type === "Identifier" && item.name === "."){
+
+        let last = tokens.pop() as es.Expression
+        if(last === undefined){
+          tokens.push(item)
+        } 
+        i += 1
+        const next = this.visit(ctx.getChild(i)) as es.Expression
+        tokens.push({
+          type: 'MemberExpression',
+          object: last,
+          property: next,
+          computed: false,
+          optional: false
+        })
+
+
+      } else if(item.type === "Identifier" && item.name === "*"){
+        i += 1
+        const next = this.visit(ctx.getChild(i)) as es.Expression
+        tokens.push({
+          type: 'MemberExpression',
+          object: next,
+          property: item,
+          computed: false,
+          optional: false
+        })
+      } else{
+        tokens.push(item)
+      }
+      i+=1
+    }
+
+    return{
+      type:"ArrayExpression",
+      elements:tokens
+    }
+
+  }
+
+  visitDelimTokenTree(ctx: DelimTokenTreeContext): es.Expression{
+    
+    if(ctx.text === "{}"){
+      return {type:"Identifier", name:"{}"}
+    }
+    else{
+      if(ctx.getChild(0).text === '['){
+        return {
+          type: 'MemberExpression',
+          object: {} as es.Expression,
+          property: (this.visit(ctx.getChild(1)) as es.ArrayExpression).elements[0] as es.Expression,
+          computed: false,
+          optional: true
+        }
+      } else if(ctx.getChild(0).text === '('){
+        return (this.visit(ctx.getChild(1)) as es.ArrayExpression).elements[0] as es.Expression
+      } else {
+        return this.visit(ctx.getChild(1)) as es.Expression
+      }
+
+    }
+
+  }
+
+  visitTokenTreeToken(ctx: TokenTreeTokenContext) : es.Expression{
+    return this.visit(ctx.getChild(0)) as es.Expression
+  }
+  visitMacroIdentifierLikeToken(ctx: MacroIdentifierLikeTokenContext): es.Expression{
+    return this.visit(ctx.getChild(0)) as es.Expression
+  }
+
+  visitMacroPunctuationToken(ctx: MacroPunctuationTokenContext):es.Expression{
+    return {type:"Identifier", name:ctx.text}
+  }
+
+  visitMacroLiteralToken(ctx: MacroLiteralTokenContext): es.Expression{
+    
+    return this.visit(ctx.getChild(0)) as es.Expression
+  }
+
+  visitVisItem(ctx: VisItemContext): es.Statement | es.Expression{
+    return this.visit(ctx.getChild(0))
+  }
+
+  visitEnumeration(ctx: EnumerationContext): es.Statement {
+
+    const enum_items = ctx.childCount === 5? this.visit(ctx.getChild(3)):undefined
+    return {
+      type:"ClassDeclaration",
+      id:this.pattern_generator.visit(ctx.getChild(1)) as es.Identifier,
+      superClass:{type:"Identifier", name:ctx.getChild(0).text},
+      body:{
+        type: "ClassBody",
+        body: [{
+          type: "MethodDefinition",
+          key: enum_items as es.Expression,
+          value: {} as es.FunctionExpression,
+          kind:"set",
+          computed: false,
+          static:false
+        }]
+      }
+    }
+  }
+
+  visitEnumItems(ctx: EnumItemsContext): es.Expression {
+ 
+    const value_enum: es.Expression[] = []
+    
+    for (let i = 0; i < ctx.childCount; i += 2) {
+
+      value_enum.push(this.visit(ctx.getChild(i)) as es.Expression)
+    }
+   
+    
+    return { type: 'ArrayExpression', elements: value_enum }
+  }
+
+  visitEnumItem(ctx: EnumItemContext): es.Expression {
+    const membership = ctx.childCount === 2? this.visit(ctx.getChild(1)):{} 
+    return {
+      type:"ClassExpression",
+      id: this.visit(ctx.getChild(0)) as es.Identifier,
+      body:{
+        type: "ClassBody",
+        body: [{
+          type: "MethodDefinition",
+          key: membership as es.Expression,
+          value: {} as es.FunctionExpression,
+          kind:"constructor",
+          computed: false,
+          static:false
+        }]
+      }
+    }
+  }
+
+  visitEnumItemTuple(ctx: EnumItemTupleContext): es.Expression {
+
+    return this.visit(ctx.getChild(1)) as es.Expression
+  }
+  
+  visitTupleFields(ctx: TupleFieldsContext): es.Expression {
+    const value_enum: es.Expression[] = []
+    for (let i = 0; i < ctx.childCount; i += 2) {
+      value_enum.push(this.visit(ctx.getChild(i)) as es.Expression)
+    }
+    
+    return  {
+      type: 'MemberExpression',
+      object: {type:"ArrayExpression", elements:value_enum},
+      property: { type: 'Identifier', name: '()' },
+      computed: false,
+      optional: false
+    }
+  }
+
+  visitTupleField(ctx: TupleFieldContext): es.Expression {
+
+    return this.pattern_generator.visit(ctx.getChild(0)) as es.Expression
   }
 
   /**
@@ -1024,7 +1337,6 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   }
 
   visitIfExpression(ctx: IfExpressionContext): es.Statement {
-
     const if_statement = this.visit(ctx.getChild(2)) as es.Statement
     const else_statement =
       ctx.childCount > 3 ? (this.visit(ctx.getChild(ctx.childCount - 1)) as es.Statement) : null
@@ -1070,6 +1382,7 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
     const return_type_offset = ctx.getChild(ctx.childCount - 2).text === ')' ? 0 : 1
     let params: es.Pattern[] = []
     if (func_param_offset === 1) {
+
       const param_pattern = this.pattern_generator.visit(
         ctx.getChild(3 + func_param_offset)
       ) as es.ArrayPattern
@@ -1103,10 +1416,11 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
 
   visitInfiniteLoopExpression(ctx: InfiniteLoopExpressionContext): es.Statement {
     return {
-      type: "WhileStatement",
+      type: 'WhileStatement',
       test: {
         type: 'Literal',
         value: true,
+        raw: "true",
         loc: contextToLocation(ctx)
       },
       body: this.visit(ctx.getChild(1)) as es.Statement
@@ -1122,13 +1436,13 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   visitContinueExpressionContext(ctx: ContinueExpressionContext): es.Statement {
     return {
       type: 'ContinueStatement',
-      label: ctx.childCount === 2? this.visit(ctx.getChild(1)) as es.Identifier: null
+      label: ctx.childCount === 2 ? (this.visit(ctx.getChild(1)) as es.Identifier) : null
     }
   }
   visitBreakExpressionContext(ctx: BreakExpressionContext): es.Statement {
     return {
       type: 'BreakStatement',
-      label: ctx.childCount === 2? this.visit(ctx.getChild(1)) as es.Identifier: null
+      label: ctx.childCount === 2 ? (this.visit(ctx.getChild(1)) as es.Identifier) : null
     }
   }
   visitStatement?: ((ctx: StatementContext) => es.Statement) | undefined
@@ -1217,20 +1531,12 @@ export function parse(source: string, context: Context) {
     parser.buildParseTree = true
     try {
       const tree = parser.blockExpression()
-      // const tree = parser.expression()
-      // const tree = parser.function_()
-      // const tree = parser.ifExpression()
 
-      // for (let i = 0; i < tree.childCount; i++) {
-      //   console.log(tree.getChild(i).text)
-      // }
-      // console.log(tree.getChild(1).getChild(0).getChild(0).getChild(0).getChild(0).getChild(0).getChild(0))
-      // console.log(tree.getChild(tree.childCount-1).getChild(1).getChild(0).getChild(0).getChild(0))
-      // console.log(tree.getChild(1).getChild(0).getChild(0))
       program = convertSource(tree)
-      // const output = program.body[0] as es.BlockStatement
-      // console.log((output.body[0]))
-      // console.log((output.body[1] as es.ReturnStatement).argument)
+      const output = program.body[0] as es.BlockStatement
+      // console.log(output)
+      // const output1 = output.body[1] as es.VariableDeclaration
+      // console.log(output.body[0])
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
         context.errors.push(error)

@@ -20,7 +20,6 @@ const createGlobalEnvironment = () => ({
   head: {}
 })
 
-
 // type TupleOf<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never;
 // type _TupleOf<T, N extends number, R extends unknown[]> = R['length'] extends N ? R : _TupleOf<T, N, [T, ...R]>;
 
@@ -29,7 +28,7 @@ export const createEmptyContext = <T>(
   externalSymbols: string[],
   externalContext?: T,
   moduleParams?: any,
-  heap_size= 200
+  heap_size = 200
 ): Context<T> => {
   return {
     externalSymbols,
@@ -45,7 +44,7 @@ export const createEmptyContext = <T>(
     heap: [],
     heap_size: heap_size,
     to_space: 0,
-    from_space: heap_size / 2, 
+    from_space: heap_size / 2,
     free: 0,
     node_type_number: 5,
     object_type: {}

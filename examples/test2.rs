@@ -17,3 +17,6 @@ fn f(){
 fn f(x){
     x
 }
+
+
+enum List {Cons(i32, List),Nil,}

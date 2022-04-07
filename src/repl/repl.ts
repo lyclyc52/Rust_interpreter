@@ -87,6 +87,7 @@ function main() {
   const executionMethod = opt.options.variant === 'interpreter' ? 'interpreter' : 'native'
   const useRepl = !opt.options.e
   const prelude = opt.argv[0] ?? ''
+  console.log(prelude)
   startRepl(executionMethod, variant, useRepl, prelude)
 }
 
