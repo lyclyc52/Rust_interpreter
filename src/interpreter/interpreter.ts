@@ -92,7 +92,7 @@ function* forceIt(val: any, context: Context): Value {
 
     pushEnvironment(context, val.env)
     const evalRes = yield* actualValue(val.exp, context)
-    popEnvironment(context)
+    popEnvironment(context, val)
     val.value = evalRes
     val.isMemoized = true
     return evalRes
@@ -208,7 +208,7 @@ function declareFunctions(context: Context, node: es.FunctionDeclaration) {
 
     const variable_type = ((param.left as es.ArrayPattern).elements[0] as es.Identifier).name
     const param_name = ((param.left as es.ArrayPattern).elements[1] as es.Identifier).name
-    const init_type = evaluateType((param.right as es.Pattern))
+    const init_type = evaluateType(param.right as es.Pattern)
     // if(param.right.type === 'Identifier'){
     //   init_type = param.right.name
     // } else {
@@ -344,7 +344,7 @@ function* leave(context: Context) {
 const currentEnvironment = (context: Context) => context.runtime.environments[0]
 const replaceEnvironment = (context: Context, environment: Environment) =>
   (context.runtime.environments[0] = environment)
-function popEnvironment(context: Context) {
+function popEnvironment(context: Context, result:any = undefined) {
   const env = currentEnvironment(context)
 
   context.runtime.environments.shift()
@@ -358,6 +358,67 @@ function popEnvironment(context: Context) {
         updateVariableReferenceByName(variable_name, i, out_env, context)
       }
     }
+  }
+  garbage_collection(context, result)
+}
+
+function copy(context:Context, starting:number){
+
+  if ( context.heap[starting+ garbage_pointer_offset] >= context.to_space
+      && context.heap[starting+ garbage_pointer_offset] <= context.top_of_space )
+  {
+      return context.heap[starting+ garbage_pointer_offset] 
+  }
+  else
+  {
+      const free = context.free
+      for(let i =0;i<context.heap[starting + node_size_offset]; i+=1){
+        context.heap[free + i] = context.heap[starting + i]
+
+      }
+      context.free += context.heap[starting + node_size_offset]
+      context.heap[starting + garbage_pointer_offset]  = free
+      return free;
+  }
+}
+
+function copy_environment(context:Context, environment:Environment){
+  if (environment === null || environment === undefined) {
+    return
+  }
+  for(const i in environment.head){
+    if(environment.head[i].value_type === "Box"){
+      copy(context, environment.head[i].value)
+    }
+    
+  }
+
+}
+
+function garbage_collection(context:Context, result:any=undefined){
+
+  const temp = context.from_space 
+  context.from_space = context.to_space 
+  context.to_space = temp 
+  context.top_of_space = context.to_space + context.heap_size / 2 - 1 
+
+  context.free = context.to_space
+  let position = context.free
+
+
+  if(result !== undefined && (result.type === 'Box' )){
+    copy(context, result.value)
+  }
+  copy_environment(context, currentEnvironment(context))
+
+  while(position < context.free){
+
+      for (let i = context.heap[position+first_offset]; 
+          i < context.heap[position+last_offset];
+          i+=1) {
+            context.heap[position + i] = copy(context, context.heap[object_value_offset+ i]);
+      }
+      position += context.heap[position + node_size_offset];
   }
 }
 
@@ -409,7 +470,6 @@ function updateVariableReferenceByName(
     return
   }
   if (environment.head[variable_name] !== undefined) {
-    
     for (let i = environment.head[variable_name].reference_names.length - 1; i >= 0; i -= 1) {
       if (environment.head[variable_name].reference_names[i] === ref_name) {
         environment.head[variable_name].reference_names.splice(i, 1)
@@ -437,7 +497,7 @@ function* setVariableReferenceByName(
   ref_type: string
 ): any {
   const name = node.name
-  
+
   if (environment === null || environment === undefined) {
     handleRuntimeError(context, new errors.UndefinedVariable(name, node))
   } else {
@@ -452,7 +512,6 @@ function* setVariableReferenceByName(
       ) {
         handleRuntimeError(context, new errors.DifferentTypeReference(name, node))
       } else {
-        
         environment.head[name].has_reference = ref_type
         // list all reference variables of the object
         if (environment.head[name].reference_names === undefined) {
@@ -461,7 +520,6 @@ function* setVariableReferenceByName(
         } else {
           environment.head[name].reference_names.push(ref_name)
         }
-
       }
     } else {
       return yield* setVariableReferenceByName(
@@ -558,14 +616,11 @@ function* assignValueByName(
   } else {
     name = (node as es.Identifier).name
   }
-  
-  
+
   if (environment === null || environment === undefined) {
     handleRuntimeError(context, new errors.UndefinedVariable(name, node))
   } else {
-
     if (environment.head[name] !== undefined) {
-      
       if (environment.head[name].variable_type === 'const') {
         handleRuntimeError(context, new errors.ConstAssignment(node, name))
       }
@@ -582,15 +637,22 @@ function* assignValueByName(
   }
 }
 
-function pushToHeap(value: any, context: Context) {
+function pushToHeap(node:es.Node,value: any, context: Context) {
   if (isArray(value.value)) {
-    pushArrayToHeap(value.value, value.type, context)
+    pushArrayToHeap(node, value.value, value.type, context)
   } else {
-    pushItemToHeap(value, context)
+    pushItemToHeap(node,value, context)
   }
 }
 
-function pushItemToHeap(value: any, context: Context) {
+function pushItemToHeap(node:es.Node,value: any, context: Context) {
+  if(context.free + 6 > context.from_space){
+    garbage_collection(context)
+  }
+  if(context.free + 6 > context.from_space){
+    handleRuntimeError(context, new errors.HeapOverflow(node))
+  }
+
   if (typeof value === 'number') {
     context.heap[context.free + node_type_offset] = NODETYPE_NUMBER
     context.heap[context.free + node_size_offset] = SIZE_NUMBER
@@ -634,7 +696,7 @@ function pushItemToHeap(value: any, context: Context) {
   }
 }
 
-function pushArrayToHeap(value: any[], type: string, context: Context) {
+function pushArrayToHeap(node:es.Node, value: any[], type: string, context: Context) {
   const starting = context.free
   let type_value
   if (isArray(type)) {
@@ -646,6 +708,15 @@ function pushArrayToHeap(value: any[], type: string, context: Context) {
   } else {
     type_value = type
   }
+
+  if(value.length + 5 +starting > context.from_space){
+    garbage_collection(context)
+  }
+  if(value.length + 5 +starting > context.from_space){
+    handleRuntimeError(context, new errors.HeapOverflow(node))
+  }
+
+
   context.heap[starting + node_type_offset] = context.object_type[type_value]
   context.heap[starting + node_size_offset] = value.length + 5
   context.heap[starting + garbage_pointer_offset] = starting
@@ -656,7 +727,7 @@ function pushArrayToHeap(value: any[], type: string, context: Context) {
 
   for (let i = 0; i < value.length; i = i + 1) {
     context.heap[starting + 5 + i] = context.free
-    pushToHeap(value[i], context)
+    pushToHeap(node,value[i], context)
   }
 }
 
@@ -715,12 +786,10 @@ function* evaluateBinaryExpression(
   }
 }
 function* evaluateBlockStatement(context: Context, node: es.BlockStatement) {
-
   let result
   declareFunctionsAndVariables(context, node)
 
   for (let i = 0; i < node.body.length; i += 1) {
-    
     const statement = node.body[i]
     result = yield* evaluate(statement, context)
 
@@ -732,9 +801,7 @@ function* evaluateBlockStatement(context: Context, node: es.BlockStatement) {
     ) {
       break
     }
-
   }
-
 
   return result
 }
@@ -926,10 +993,15 @@ function* evaluateAssignmentExpression(context: Context, node: es.AssignmentExpr
   if (value instanceof ReturnValue) {
     value = value.value
   }
-  if(value !== undefined){
-    if(value.type === '&' || value.type === '&mut'){
-      yield* setVariableReferenceByName(value.value, (node.left as es.Identifier).name,
-                                        currentEnvironment(context),context,value.type)
+  if (value !== undefined) {
+    if (value.type === '&' || value.type === '&mut') {
+      yield* setVariableReferenceByName(
+        value.value,
+        (node.left as es.Identifier).name,
+        currentEnvironment(context),
+        context,
+        value.type
+      )
     }
   }
   yield* assignValueByName(node.left, value, environment, context)
@@ -1017,23 +1089,27 @@ function* evaluateCallExpression(context: Context, node: es.CallExpression) {
         return { value: return_value, type: func.variable_name }
       } else {
         const func_body = { type: 'BlockStatement', body: func.value } as es.BlockStatement
-        
+
         const closure: Frame = {}
         for (let i = 0; i < node.arguments.length; i += 1) {
           const param = func.env[i]
           closure[param.param_name] = param
           const value = yield* evaluate(node.arguments[i], context)
-          if(value.type){
+          if (value.type) {
             closure[param.param_name].value = value.value
             closure[param.param_name].value_type = value.type
-          } else{
+          } else {
             closure[param.param_name].value = value
           }
-          if(value.type === '&mut' || value.type === '&'){
-            yield* setVariableReferenceByName( value.value,param.param_name,environment,context,value.type)
+          if (value.type === '&mut' || value.type === '&') {
+            yield* setVariableReferenceByName(
+              value.value,
+              param.param_name,
+              environment,
+              context,
+              value.type
+            )
           }
-          
-
         }
         const func_env = {
           name: 'function_environment',
@@ -1044,13 +1120,13 @@ function* evaluateCallExpression(context: Context, node: es.CallExpression) {
         pushEnvironment(context, func_env)
         let result = yield* evaluateBlockStatement(context, func_body)
         const env = currentEnvironment(context)
-        popEnvironment(context)
+        popEnvironment(context, result)
 
         if (result instanceof ReturnValue) {
           result = result.value
         }
 
-        if(result !== undefined){
+        if (result !== undefined) {
           if (result.type === '&' || result.type === '&mut') {
             if (env.head[(result.value as es.Identifier).name] !== undefined) {
               handleRuntimeError(
@@ -1069,9 +1145,8 @@ function* evaluateCallExpression(context: Context, node: es.CallExpression) {
 
 function* evaluateWhileStatement(context: Context, node: es.WhileStatement) {
   let condition = yield* evaluate(node.test, context)
-  let result:any
+  let result: any
 
-  
   while (condition) {
     result = yield* evaluate(node.body, context)
     condition = yield* evaluate(node.test, context)
@@ -1080,7 +1155,6 @@ function* evaluateWhileStatement(context: Context, node: es.WhileStatement) {
     } else if (result instanceof BreakValue) {
       return undefined
     }
-
   }
 
   return result
@@ -1128,8 +1202,6 @@ function* evaluateForInStatement(context: Context, node: es.ForInStatement) {
 
   let result
 
-  
-
   for (const iter of range) {
     for_env.head[iter_name.name].value = iter
     pushEnvironment(context, for_env)
@@ -1143,7 +1215,7 @@ function* evaluateForInStatement(context: Context, node: es.ForInStatement) {
     } else if (result instanceof ContinueValue) {
       continue
     }
-    popEnvironment(context)
+    popEnvironment(context, result)
   }
 
   return result
@@ -1178,7 +1250,7 @@ export const builtin_evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   "Box::new" :function*(node: es.CallExpression, context: Context) {
     const starting = context.free
     const value = yield* evaluate(node.arguments[0] as es.Expression, context)
-    pushToHeap(value,context)
+    pushToHeap(node,value,context)
     return {value:starting, type:"Box"}
   },
 
@@ -1401,7 +1473,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   IfStatement: function* (node: es.IfStatement | es.ConditionalExpression, context: Context) {
-  
     return yield* evaluateIfStatement(context, node)
   },
 
@@ -1424,12 +1495,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
     const environment = createBlockEnvironment(context, 'block')
 
-    
     pushEnvironment(context, environment)
     const result = yield* evaluateBlockStatement(context, node)
-    popEnvironment(context)
+    popEnvironment(context, result)
 
-    
     return result
   },
 
@@ -1450,16 +1519,18 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     declareFunctionsAndVariables(context, node.body[0] as es.BlockStatement)
 
     const main_call = {
-      type: "CallExpression",
+      type: 'CallExpression',
       optional: false,
-      callee: {type:'Identifier', name:'main'},
+      callee: { type: 'Identifier', name: 'main' },
       arguments: []
     } as es.CallExpression
 
-    
     // const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
 
-    return yield* evaluate(main_call,context)
+    yield* evaluate(main_call, context)
+
+    console.log("END")
+    return undefined
   }
 }
 const builtin_function_name = ['Box::new', 'println!']
@@ -1477,7 +1548,6 @@ function addBuiltinFunctions(environment: Environment) {
 export function* evaluate(node: es.Node, context: Context) {
   yield* visit(context, node)
   const result = yield* evaluators[node.type](node, context)
-
 
   yield* leave(context)
 
@@ -1508,7 +1578,7 @@ export function* apply(
       bodyEnvironment.thisContext = thisContext
       pushEnvironment(context, bodyEnvironment)
       result = yield* evaluateBlockStatement(context, fun.node.body as es.BlockStatement)
-      popEnvironment(context)
+      popEnvironment(context, result)
       if (result instanceof TailCallReturnValue) {
         fun = result.callee
         node = result.node

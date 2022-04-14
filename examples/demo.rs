@@ -145,6 +145,7 @@ fn change(reference: &mut i32) {
 }
 fn main(){
     let mut s = 5;
+    println!(\"{}\",s);
     change(&mut s);
     println!(\"{}\",s);
 }
@@ -179,6 +180,12 @@ fn main(){
 }
 
 
+fn main(){
+    let mut b; // allowed
+    for i in 1..100{
+        b = Box::new(1);
+    }
+}
 
 // Ex 15
 enum List {

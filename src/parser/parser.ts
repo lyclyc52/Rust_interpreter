@@ -58,7 +58,7 @@ import { TupleExpressionContext } from '../Rust/RustParser'
 // import { ClosureExpression_Context } from "../Rust/RustParser";
 import { ExpressionWithBlock_Context } from '../Rust/RustParser'
 // import { MacroInvocationAsExpressionContext } from "../Rust/RustParser";
-import { CrateContext } from "../Rust/RustParser";
+import { CrateContext } from '../Rust/RustParser'
 // import { MacroInvocationContext } from "../Rust/RustParser";
 import { DelimTokenTreeContext } from '../Rust/RustParser'
 import { TokenTreeContext } from '../Rust/RustParser'
@@ -264,13 +264,26 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 
-
 const Statement_type = [
-  "ExpressionStatement", "BlockStatement" , "EmptyStatement" ,
-  "DebuggerStatement" , "WithStatement" , "ReturnStatement" , "LabeledStatement" ,
-  "BreakStatement" , "ContinueStatement" , "IfStatement" , "SwitchStatement" ,
-  "ThrowStatement" , "TryStatement" , "WhileStatement" , "DoWhileStatement" ,
-  "ForStatement" , "ForInStatement" , "ForOfStatement" , "Declaration"
+  'ExpressionStatement',
+  'BlockStatement',
+  'EmptyStatement',
+  'DebuggerStatement',
+  'WithStatement',
+  'ReturnStatement',
+  'LabeledStatement',
+  'BreakStatement',
+  'ContinueStatement',
+  'IfStatement',
+  'SwitchStatement',
+  'ThrowStatement',
+  'TryStatement',
+  'WhileStatement',
+  'DoWhileStatement',
+  'ForStatement',
+  'ForInStatement',
+  'ForOfStatement',
+  'Declaration'
 ]
 // @ts-ignore
 const BinaryOperator = [
@@ -491,7 +504,6 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
   }
 
   visitTraitBound(ctx: TraitBoundContext): es.Pattern {
-    
     return this.visit(ctx.getChild(0))
   }
 
@@ -575,7 +587,6 @@ class PatternGenerator implements RustParserVisitor<es.Pattern> {
   }
 
   visitFunctionParamPattern(ctx: FunctionParamPatternContext): es.Pattern {
-
     return {
       type: 'AssignmentPattern',
       left: this.visit(ctx.getChild(0)),
@@ -973,26 +984,21 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
     ) {
       return this.visit(ctx.getChild(0)) as es.Statement
     } else {
-
-      let result 
-      if(ctx.getChild(0) instanceof BreakExpressionContext){
+      let result
+      if (ctx.getChild(0) instanceof BreakExpressionContext) {
         result = this.visitBreakExpressionContext(ctx.getChild(0) as BreakExpressionContext)
-      }
-      else {
+      } else {
         result = this.visit(ctx.getChild(0))
       }
 
-      if( Statement_type.includes(result.type)){
+      if (Statement_type.includes(result.type)) {
         return result as es.Statement
-      } else{
+      } else {
         return {
           type: 'ExpressionStatement',
           expression: result as es.Expression
         }
       }
-
-
-
     }
   }
 
@@ -1101,12 +1107,10 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
   }
 
   visitItem(ctx: ItemContext): es.Statement | es.Expression {
-    
     return this.visit(ctx.getChild(0))
   }
 
   visitMacroItem(ctx: MacroItemContext): es.Statement | es.Expression {
-    
     return this.visit(ctx.getChild(0))
   }
 
@@ -1441,17 +1445,17 @@ class StatementGenerator implements RustParserVisitor<es.Statement | es.Expressi
 
   visitCrate(ctx: CrateContext): es.Statement {
     const body: es.Statement[] = []
-    for(let i=0; i < ctx.childCount-1; i+=1){
+    for (let i = 0; i < ctx.childCount - 1; i += 1) {
       body.push(this.visit(ctx.getChild(i)) as es.Statement)
     }
     return {
-      type:"BlockStatement",
-      body:body
+      type: 'BlockStatement',
+      body: body
     }
   }
 
   visitStatement?: ((ctx: StatementContext) => es.Statement) | undefined
-  
+
   // visitStart?: ((ctx: StartContext) => es.Expression) | undefined
 
   visit(tree: ParseTree): es.Statement | es.Expression {
@@ -1537,7 +1541,6 @@ export function parse(source: string, context: Context) {
     parser.buildParseTree = true
     try {
       const tree = parser.crate()
-
 
       program = convertSource(tree)
       // const output = program.body[0] as es.BlockStatement

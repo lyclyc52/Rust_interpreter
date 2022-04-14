@@ -250,6 +250,7 @@ export async function runInContext(
   }
 
   const it = evaluate(program, context)
+  
   const scheduler: Scheduler = new PreemptiveScheduler(theOptions.steps)
 
   return scheduler.run(it, context)

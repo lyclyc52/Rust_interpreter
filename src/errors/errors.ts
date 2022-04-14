@@ -475,3 +475,21 @@ export class InvaildProperty extends RuntimeSourceError {
     return ``
   }
 }
+
+export class HeapOverflow extends RuntimeSourceError {
+  public struct_type: string
+  public property: string
+
+  constructor(node: es.Node) {
+    super(node)
+
+  }
+
+  public explain() {
+    return `Exceed the heap size.`
+  }
+
+  public elaborate() {
+    return ``
+  }
+}
