@@ -482,7 +482,6 @@ export class HeapOverflow extends RuntimeSourceError {
 
   constructor(node: es.Node) {
     super(node)
-
   }
 
   public explain() {

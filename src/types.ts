@@ -127,7 +127,7 @@ export interface Context<T = any> {
   heap_size: number
   to_space: number
   from_space: number
-  top_of_space:number
+  top_of_space: number
   free: number
 }
 

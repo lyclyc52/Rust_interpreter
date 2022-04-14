@@ -180,11 +180,21 @@ fn main(){
 }
 
 
+//garbage collection example
 fn main(){
     let mut b; // allowed
     for i in 1..100{
         b = Box::new(1);
     }
+}
+
+fn main(){
+    let mut a =Box::new(1);
+    let mut b =Box::new(1);
+    let mut c =Box::new(1);
+    let mut d =Box::new(1);
+    let mut e =Box::new(1);
+    let mut f =Box::new(1);
 }
 
 // Ex 15

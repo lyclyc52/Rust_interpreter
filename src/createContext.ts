@@ -28,7 +28,7 @@ export const createEmptyContext = <T>(
   externalSymbols: string[],
   externalContext?: T,
   moduleParams?: any,
-  heap_size = 200
+  heap_size = 60
 ): Context<T> => {
   return {
     externalSymbols,
@@ -45,7 +45,7 @@ export const createEmptyContext = <T>(
     heap_size: heap_size,
     to_space: 0,
     from_space: heap_size / 2,
-    top_of_space: heap_size / 2-1,
+    top_of_space: heap_size / 2 - 1,
     free: 0,
     node_type_number: 5,
     object_type: {}

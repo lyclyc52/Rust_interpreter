@@ -344,7 +344,7 @@ function* leave(context: Context) {
 const currentEnvironment = (context: Context) => context.runtime.environments[0]
 const replaceEnvironment = (context: Context, environment: Environment) =>
   (context.runtime.environments[0] = environment)
-function popEnvironment(context: Context, result:any = undefined) {
+function popEnvironment(context: Context, result: any = undefined) {
   const env = currentEnvironment(context)
 
   context.runtime.environments.shift()
@@ -362,63 +362,57 @@ function popEnvironment(context: Context, result:any = undefined) {
   garbage_collection(context, result)
 }
 
-function copy(context:Context, starting:number){
-
-  if ( context.heap[starting+ garbage_pointer_offset] >= context.to_space
-      && context.heap[starting+ garbage_pointer_offset] <= context.top_of_space )
-  {
-      return context.heap[starting+ garbage_pointer_offset] 
-  }
-  else
-  {
-      const free = context.free
-      for(let i =0;i<context.heap[starting + node_size_offset]; i+=1){
-        context.heap[free + i] = context.heap[starting + i]
-
-      }
-      context.free += context.heap[starting + node_size_offset]
-      context.heap[starting + garbage_pointer_offset]  = free
-      return free;
+function copy(context: Context, starting: number) {
+  if (
+    context.heap[starting + garbage_pointer_offset] >= context.to_space &&
+    context.heap[starting + garbage_pointer_offset] <= context.top_of_space
+  ) {
+    return context.heap[starting + garbage_pointer_offset]
+  } else {
+    const free = context.free
+    for (let i = 0; i < context.heap[starting + node_size_offset]; i += 1) {
+      context.heap[free + i] = context.heap[starting + i]
+    }
+    context.free += context.heap[starting + node_size_offset]
+    context.heap[starting + garbage_pointer_offset] = free
+    return free
   }
 }
 
-function copy_environment(context:Context, environment:Environment){
+function copy_environment(context: Context, environment: Environment) {
   if (environment === null || environment === undefined) {
     return
   }
-  for(const i in environment.head){
-    if(environment.head[i].value_type === "Box"){
+  for (const i in environment.head) {
+    if (environment.head[i].value_type === 'Box') {
       copy(context, environment.head[i].value)
     }
-    
   }
-
 }
 
-function garbage_collection(context:Context, result:any=undefined){
-
-  const temp = context.from_space 
-  context.from_space = context.to_space 
-  context.to_space = temp 
-  context.top_of_space = context.to_space + context.heap_size / 2 - 1 
+function garbage_collection(context: Context, result: any = undefined) {
+  const temp = context.from_space
+  context.from_space = context.to_space
+  context.to_space = temp
+  context.top_of_space = context.to_space + context.heap_size / 2 - 1
 
   context.free = context.to_space
   let position = context.free
 
-
-  if(result !== undefined && (result.type === 'Box' )){
+  if (result !== undefined && result.type === 'Box') {
     copy(context, result.value)
   }
   copy_environment(context, currentEnvironment(context))
 
-  while(position < context.free){
-
-      for (let i = context.heap[position+first_offset]; 
-          i < context.heap[position+last_offset];
-          i+=1) {
-            context.heap[position + i] = copy(context, context.heap[object_value_offset+ i]);
-      }
-      position += context.heap[position + node_size_offset];
+  while (position < context.free) {
+    for (
+      let i = context.heap[position + first_offset];
+      i < context.heap[position + last_offset];
+      i += 1
+    ) {
+      context.heap[position + i] = copy(context, context.heap[object_value_offset + i])
+    }
+    position += context.heap[position + node_size_offset]
   }
 }
 
@@ -637,19 +631,19 @@ function* assignValueByName(
   }
 }
 
-function pushToHeap(node:es.Node,value: any, context: Context) {
+function pushToHeap(node: es.Node, value: any, context: Context) {
   if (isArray(value.value)) {
     pushArrayToHeap(node, value.value, value.type, context)
   } else {
-    pushItemToHeap(node,value, context)
+    pushItemToHeap(node, value, context)
   }
 }
 
-function pushItemToHeap(node:es.Node,value: any, context: Context) {
-  if(context.free + 6 > context.from_space){
+function pushItemToHeap(node: es.Node, value: any, context: Context) {
+  if (context.free + 6 > context.from_space) {
     garbage_collection(context)
   }
-  if(context.free + 6 > context.from_space){
+  if (context.free + 6 > context.from_space) {
     handleRuntimeError(context, new errors.HeapOverflow(node))
   }
 
@@ -696,7 +690,7 @@ function pushItemToHeap(node:es.Node,value: any, context: Context) {
   }
 }
 
-function pushArrayToHeap(node:es.Node, value: any[], type: string, context: Context) {
+function pushArrayToHeap(node: es.Node, value: any[], type: string, context: Context) {
   const starting = context.free
   let type_value
   if (isArray(type)) {
@@ -709,13 +703,12 @@ function pushArrayToHeap(node:es.Node, value: any[], type: string, context: Cont
     type_value = type
   }
 
-  if(value.length + 5 +starting > context.from_space){
+  if (value.length + 5 + starting > context.from_space) {
     garbage_collection(context)
   }
-  if(value.length + 5 +starting > context.from_space){
+  if (value.length + 5 + starting > context.from_space) {
     handleRuntimeError(context, new errors.HeapOverflow(node))
   }
-
 
   context.heap[starting + node_type_offset] = context.object_type[type_value]
   context.heap[starting + node_size_offset] = value.length + 5
@@ -727,7 +720,7 @@ function pushArrayToHeap(node:es.Node, value: any[], type: string, context: Cont
 
   for (let i = 0; i < value.length; i = i + 1) {
     context.heap[starting + 5 + i] = context.free
-    pushToHeap(node,value[i], context)
+    pushToHeap(node, value[i], context)
   }
 }
 
@@ -1529,7 +1522,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
     yield* evaluate(main_call, context)
 
-    console.log("END")
+    console.log('END')
     return undefined
   }
 }
