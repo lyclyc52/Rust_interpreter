@@ -290,7 +290,6 @@ export class InvalidOperator extends RuntimeSourceError {
   }
 }
 
-
 export class MultipleMutReference extends RuntimeSourceError {
   constructor(public name: string, node: es.Node) {
     super(node)
@@ -333,37 +332,43 @@ export class InvaildParameter extends RuntimeSourceError {
   }
 }
 
-
 export class NotMatchprintln extends RuntimeSourceError {
   public replace_num: number
   public replace_arg: number
-  constructor(node: es.Node, replace_num:number, replace_arg:number) {
+  constructor(node: es.Node, replace_num: number, replace_arg: number) {
     super(node)
     this.replace_num = replace_num
     this.replace_arg = replace_arg
   }
 
   public explain() {
-    return this.replace_num+` positional arguments in format string, but `+this.replace_arg+ ` arguments given`
+    return (
+      this.replace_num +
+      ` positional arguments in format string, but ` +
+      this.replace_arg +
+      ` arguments given`
+    )
   }
 
   public elaborate() {
-    return this.replace_num+` positional arguments in format string, but `+this.replace_arg+ ` arguments given`
+    return (
+      this.replace_num +
+      ` positional arguments in format string, but ` +
+      this.replace_arg +
+      ` arguments given`
+    )
   }
 }
 
-
-
-
 export class NotPrintable extends RuntimeSourceError {
-  public value:any;
-  constructor(node: es.Node, value:any) {
+  public value: any
+  constructor(node: es.Node, value: any) {
     super(node)
     this.value = value
   }
 
   public explain() {
-    return this.value+` cannot be printed.`
+    return this.value + ` cannot be printed.`
   }
 
   public elaborate() {
@@ -385,33 +390,31 @@ export class InvaildprintlnArgumnet extends RuntimeSourceError {
   }
 }
 
-
 export class ReferUninit extends RuntimeSourceError {
-  public name:string;
-  constructor(name:string, node: es.Node) {
+  public name: string
+  constructor(name: string, node: es.Node) {
     super(node)
     this.name = this.name
   }
 
   public explain() {
-    return  `Assign a reference to an uninitialized variable `+this.name +`.`
+    return `Assign a reference to an uninitialized variable ` + this.name + `.`
   }
 
   public elaborate() {
     return `Only string, boolean and number type can be printed.`
   }
 }
-
 
 export class ReturnLocalReference extends RuntimeSourceError {
-  public name:string;
-  constructor(name:string, node: es.Node) {
+  public name: string
+  constructor(name: string, node: es.Node) {
     super(node)
-    this.name =name
+    this.name = name
   }
 
   public explain() {
-    return  this.name +` returns a local reference.`
+    return this.name + ` returns a local reference.`
   }
 
   public elaborate() {
@@ -419,18 +422,17 @@ export class ReturnLocalReference extends RuntimeSourceError {
   }
 }
 
-
 export class InvaildEnumValue extends RuntimeSourceError {
-  public root:string;
-  public leaf:string;
-  constructor(root:string, leaf:string, node: es.Node) {
+  public root: string
+  public leaf: string
+  constructor(root: string, leaf: string, node: es.Node) {
     super(node)
-    this.root =root
-    this.leaf =leaf
+    this.root = root
+    this.leaf = leaf
   }
 
   public explain() {
-    return  this.root +` does not have `+this.leaf +`.`
+    return this.root + ` does not have ` + this.leaf + `.`
   }
 
   public elaborate() {
@@ -439,16 +441,15 @@ export class InvaildEnumValue extends RuntimeSourceError {
 }
 
 export class RecursiveDefiniton extends RuntimeSourceError {
-  public name:string;
+  public name: string
 
-  constructor(name:string, node: es.Node) {
+  constructor(name: string, node: es.Node) {
     super(node)
-    this.name =name
-
+    this.name = name
   }
 
   public explain() {
-    return  this.name +` has recursive definition.`
+    return this.name + ` has recursive definition.`
   }
 
   public elaborate() {
@@ -456,20 +457,18 @@ export class RecursiveDefiniton extends RuntimeSourceError {
   }
 }
 
-
 export class InvaildProperty extends RuntimeSourceError {
-  public struct_type:string;
-  public property:string;
+  public struct_type: string
+  public property: string
 
-  constructor(node: es.Node, type:string, property:string) {
+  constructor(node: es.Node, type: string, property: string) {
     super(node)
-    this.struct_type =type
+    this.struct_type = type
     this.property = property
-
   }
 
   public explain() {
-    return  this.struct_type +` does not have property `+this.property+`.`
+    return this.struct_type + ` does not have property ` + this.property + `.`
   }
 
   public elaborate() {
