@@ -62,7 +62,11 @@ function traverse(node: TypeAnnotatedNode<es.Node>, constraints?: Constraint[]) 
       traverse(node.argument, constraints)
       break
     }
-    case 'LogicalExpression': // both cases are the same
+    case 'LogicalExpression': {
+      traverse(node.left, constraints)
+      traverse(node.right, constraints)
+      break
+    }
     case 'BinaryExpression': {
       traverse(node.left, constraints)
       traverse(node.right, constraints)
@@ -73,8 +77,14 @@ function traverse(node: TypeAnnotatedNode<es.Node>, constraints?: Constraint[]) 
       break
     }
     case 'BlockStatement':
+      // {
+      //   traverse(node.type,constraints)
+      // }
       throw Error('Block statements not supported for x-slang')
     case 'WhileStatement':
+      //   {traverse(node.body,constraints)
+      //   break
+      // }
       throw Error('While statements not supported for x-slang')
     case 'ForStatement':
       throw Error('For statements not supported for x-slang')
@@ -743,7 +753,11 @@ const primitiveFuncs: [string, Type | ForAll][] = [
   [NEGATIVE_OP, tFunc(tNumber, tNumber)],
   ['!', tFunc(tBool, tBool)],
   ['&&', tForAll(tFunc(tBool, tVar('T'), tVar('T')))],
+  ['&', tForAll(tFunc(tBool, tVar('T'), tVar('T')))],
   ['||', tForAll(tFunc(tBool, tVar('T'), tVar('T')))],
+  ['|', tForAll(tFunc(tBool, tVar('T'), tVar('T')))],
+  ['==', tForAll(tFunc(tAddable('A'), tAddable('A'), tBool))],
+  ['!=', tForAll(tFunc(tAddable('A'), tAddable('A'), tBool))],
   ['<', tForAll(tFunc(tAddable('A'), tAddable('A'), tBool))],
   ['<=', tForAll(tFunc(tAddable('A'), tAddable('A'), tBool))],
   ['>', tForAll(tFunc(tAddable('A'), tAddable('A'), tBool))],
