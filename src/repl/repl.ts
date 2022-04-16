@@ -5,6 +5,7 @@ import { createContext, IOptions, parseError, runInContext } from '../index'
 import { Variant, ExecutionMethod } from '../types'
 import Closure from '../interpreter/closure'
 import { sourceLanguages } from '../constants'
+import { readFileSync } from 'fs'
 
 function startRepl(
   executionMethod: ExecutionMethod = 'interpreter',
@@ -20,8 +21,12 @@ function startRepl(
     variant
   }
   runInContext(prelude, context, options).then(preludeResult => {
+    
     if (preludeResult.status === 'finished' || preludeResult.status === 'suspended-non-det') {
-      console.dir(preludeResult.value, { depth: null })
+      if(preludeResult.value !== undefined){
+        console.dir(preludeResult.value, { depth: null })
+      }
+      process.exit(1)
       if (!useRepl) {
         return
       }
@@ -86,9 +91,16 @@ function main() {
 
   const executionMethod = opt.options.variant === 'interpreter' ? 'interpreter' : 'native'
   const useRepl = !opt.options.e
-  const prelude = opt.argv[0] ?? ''
-  // console.log(prelude)
-  startRepl(executionMethod, variant, useRepl, prelude)
+  const prelude = opt.argv[0] ?? '' 
+
+  if(prelude.charAt(0) === '$'){
+    const file = readFileSync( prelude.slice(1, ) , 'utf-8')
+    startRepl(executionMethod, variant, useRepl, file)
+  }
+  else{
+    startRepl(executionMethod, variant, useRepl, prelude)
+  }
+  
 }
 
 main()

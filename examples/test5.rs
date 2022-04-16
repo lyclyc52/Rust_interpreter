@@ -1,33 +1,20 @@
-// multiple reference error
-let mut s = 5;
-let r1 = &s; // no problem
-let r2 = &s; // no problem
-let r3 = &mut s; // BIG PROBLEM
-println!("{}, {}, and {}", r1, r2, r3);
+// Ex: link list
+// enum List {
+//     Cons(i32, List),//error
+//     Nil,
+// } 
+
+// fn main(){
+//     let list = List::Cons(1,Nil); 
+// }
 
 
-// return an assignment expression will cause problem
-fn a()->i32{
-    let x =2;
-    x=3
+
+enum List {
+    Cons(i32, Box<List>), //allowed
+    Nil,
+} 
+fn main(){
+    let list = List::Cons(1, Box::new(List::Cons(2, List::Nil)));
 }
 
-fn main() {
-    let b = a();
-    println!("{:?}",b);
-}
-
-
-fn a(a:i32)
-{
-    {
-       3
-    }
-}
-
-
-// if something is out of scope, it will be deallocated 
-// dangling pointer: 
-// return Box::type allowed
-// return reference type: not allowed
-// explain their difference.

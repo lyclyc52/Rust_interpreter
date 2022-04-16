@@ -482,7 +482,32 @@ function updateVariableReferenceByName(
     )
   }
 }
-
+function* checkVariableReferenceByName(
+  node: es.Identifier,
+  ref_name: string,
+  environment: Environment,
+  context: Context,
+):any{
+  const name = node.name
+  if (environment === null || environment === undefined) {
+    handleRuntimeError(context, new errors.UndefinedVariable(name, node))
+  } else {
+    if (environment.head[name] !== undefined) {
+      if (environment.head[name].reference_names !== undefined && environment.head[name].reference_names.includes(ref_name) ) {
+        
+      } else {
+        handleRuntimeError(context, new errors.MultipleMutReference(name, node))
+      }
+    } else {
+      return yield* checkVariableReferenceByName(
+        node,
+        ref_name,
+        environment.tail as Environment,
+        context
+      )
+    }
+  }
+}
 function* setVariableReferenceByName(
   node: es.Identifier,
   ref_name: string,
@@ -498,14 +523,17 @@ function* setVariableReferenceByName(
     if (environment.head[name] !== undefined) {
       if (environment.head[name].value === undefined) {
         handleRuntimeError(context, new errors.ReferUninit(name, node))
-      } else if (environment.head[name].has_reference === '&mut' && ref_type === '&mut') {
-        handleRuntimeError(context, new errors.MultipleMutReference(name, node))
+       
       } else if (
         (environment.head[name].has_reference === '&' && ref_type === '&mut') ||
         (environment.head[name].has_reference === '&mut' && ref_type === '&')
       ) {
         handleRuntimeError(context, new errors.DifferentTypeReference(name, node))
-      } else {
+      } 
+      else if (environment.head[name].has_reference === '&mut' && ref_type === '&mut') {
+        environment.head[name].reference_names.pop()
+        environment.head[name].reference_names.push(ref_name)
+      }  else {
         environment.head[name].has_reference = ref_type
         // list all reference variables of the object
         if (environment.head[name].reference_names === undefined) {
@@ -515,6 +543,7 @@ function* setVariableReferenceByName(
           environment.head[name].reference_names.push(ref_name)
         }
       }
+      
     } else {
       return yield* setVariableReferenceByName(
         node,
@@ -822,6 +851,7 @@ function* evaluateMemberExpression(context: Context, node: es.MemberExpression) 
     const variable = yield* getVariableByName(node.object as es.Identifier, env, context)
 
     if (variable.value.type === 'Identifier') {
+      yield* checkVariableReferenceByName(variable.value, (node.object as es.Identifier).name,env,context)
       return yield* evaluate(variable.value, context)
     } else {
       return yield* read_heap_value(variable.value, context, null)
@@ -1336,9 +1366,14 @@ export const builtin_evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   /** Simple Values */
   Literal: function* (node: es.Literal, context: Context) {
-    const n = Number(node.raw)
+   const n = Number(node.raw)
     if (!isNaN(n)) {
-      return node.value
+      // const float = parseFloat(node.raw as string)
+      // console.log(float)
+      // if (float - n > 0.00000001){
+      return n
+
+        
     } else {
       if (node.raw === 'true') {
         return true
@@ -1522,7 +1557,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
     yield* evaluate(main_call, context)
 
-    console.log('END')
     return undefined
   }
 }

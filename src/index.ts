@@ -228,6 +228,7 @@ export async function runInContext(
   context: Context,
   options: Partial<IOptions> = {}
 ): Promise<Result> {
+  // console.warn = () => {};
   const theOptions: IOptions = { ...DEFAULT_OPTIONS, ...options }
   context.variant = determineVariant(context, options)
   context.errors = []

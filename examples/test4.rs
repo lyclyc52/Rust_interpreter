@@ -1,19 +1,19 @@
-// mutable reference
-fn main() {
-    let mut s = 5;
-    change(&mut s);
+
+// Ex: local reference
+fn reference()->&i32{
+    let a=1; 
+    &a
+} 
+fn BoxReference()->Box<i32>{
+    let a = Box::new(1); 
+    a
+} 
+
+// fn main(){
+//     let r = reference(); // error
+// }
+
+fn main(){
+    let b = BoxReference(); // allowed
+    println!("{}",*b);
 }
-
-fn change(reference: &mut i32) {
-    reference = 6;
-}
-
-
-
-// Smart pointer Box<T>
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-let x = Box::new(Point { x: 0.0, y: 0.0 })
