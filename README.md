@@ -1,8 +1,4 @@
-X-slang is a reference implementation of a simple calculator language
-conforming to the `<language>-slang` API accepted by the Source academy frontend. 
-X-slang internally uses antlr4ts to automatically generate a parser and can serve as
-a starting point for students to build their own Source-academy compatible language
-implementations.
+In this project, We use *TypeScript* to implement a small subset of *Rust*.
 
 Usage
 =====
